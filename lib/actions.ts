@@ -46,6 +46,7 @@ export async function demoLoginAction(role: "BUYER" | "SELLER" | "ADMIN") {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return;
   await createSession(user.id);
+  revalidatePath("/", "layout");
   if (role === "SELLER") redirect("/seller");
   if (role === "ADMIN") redirect("/admin");
   redirect("/home");
@@ -53,6 +54,7 @@ export async function demoLoginAction(role: "BUYER" | "SELLER" | "ADMIN") {
 
 export async function logoutAction() {
   await clearSession();
+  revalidatePath("/", "layout");
   redirect("/");
 }
 

@@ -1,16 +1,24 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { demoLoginAction, loginAction } from "@/lib/actions";
+import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+function roleHome(role: Role) {
+  if (role === "SELLER") return "/seller";
+  if (role === "ADMIN") return "/admin";
+  return "/home";
+}
+
+function roleWord(role: Role) {
+  if (role === "SELLER") return "seller";
+  if (role === "ADMIN") return "admin";
+  return "buyer";
+}
+
 export default async function LoginPage() {
   const user = await getSessionUser();
-  if (user) {
-    if (user.role === "SELLER") redirect("/seller");
-    if (user.role === "ADMIN") redirect("/admin");
-    redirect("/home");
-  }
 
   return (
     <main className="min-h-svh px-5 pt-16 pb-10 flex flex-col">
@@ -27,8 +35,18 @@ export default async function LoginPage() {
 
       <div className="card mt-8 p-4 space-y-3">
         <p className="text-sm font-semibold">Demo login — no signup</p>
+        {user ? (
+          <>
+            <p className="text-xs text-muted">
+              Signed in as {user.name} · {roleWord(user.role)}
+            </p>
+            <Link href={roleHome(user.role)} className="btn-primary block text-center">
+              Continue as {roleWord(user.role)}
+            </Link>
+          </>
+        ) : null}
         <form action={demoLoginAction.bind(null, "BUYER")}>
-          <button className="btn-primary" type="submit">
+          <button className={user ? "btn-secondary" : "btn-primary"} type="submit">
             Enter as buyer
           </button>
         </form>
