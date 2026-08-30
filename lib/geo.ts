@@ -22,5 +22,7 @@ export function clamp(n: number, min: number, max: number): number {
 }
 
 export function daysBetween(from: Date, to: Date): number {
-  return Math.ceil((to.getTime() - from.getTime()) / 86_400_000);
+  const start = Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate());
+  const end = Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate());
+  return Math.round((end - start) / 86_400_000);
 }

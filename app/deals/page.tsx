@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { TopBar } from "@/components/TopBar";
 import { BuyerNav } from "@/components/Nav";
 import { usd } from "@/lib/money";
+import { formatSlot } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -43,13 +44,7 @@ export default async function DealsPage() {
                   <p>{usd(title.depositAmount)} to title</p>
                   {slot ? (
                     <p>
-                      {slot.startsAt.toLocaleString("en-US", {
-                        weekday: "short",
-                        month: "numeric",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}{" "}
+                      {formatSlot(slot.startsAt)}{" "}
                       · {slot.location}
                     </p>
                   ) : null}

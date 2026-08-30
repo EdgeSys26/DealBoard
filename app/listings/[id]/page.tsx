@@ -16,6 +16,7 @@ import { HoldTimer } from "@/components/HoldTimer";
 import { usd } from "@/lib/money";
 import { BADGE_LABEL, WORK_LEVEL_LABEL, type WorkLevel } from "@/lib/types";
 import { daysBetween } from "@/lib/geo";
+import { formatSlot } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -272,13 +273,7 @@ function TitleCard({
       {titleFile.slots.map((slot) => (
         <form key={slot.id} action={pickTitleSlotAction.bind(null, slot.id)} className="flex items-center justify-between gap-2 text-sm">
           <span>
-            {slot.startsAt.toLocaleString("en-US", {
-              weekday: "short",
-              month: "numeric",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}{" "}
+            {formatSlot(slot.startsAt)}{" "}
             · {slot.location}
             {slot.selected ? " · selected" : ""}
           </span>

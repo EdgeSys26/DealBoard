@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { gradeListing, leftover } from "./grade";
 import { NOBLESVILLE_SQUARE } from "./types";
 import { minOfferPrice, assertOfferFloor, tightenFloorPct } from "./offer-floor";
-import { haversineMiles } from "./geo";
+import { daysBetween, haversineMiles } from "./geo";
 
 const demoBox = {
   lat: NOBLESVILLE_SQUARE.lat,
@@ -98,6 +98,14 @@ describe("Noblesville fixtures", () => {
   it("does not use seller ARV in leftover math", () => {
     const math = leftover(278_000, 189_000, 12_000);
     expect(math).toBe(77_000);
+  });
+});
+
+describe("calendar days", () => {
+  it("counts 11 days from Aug 30 to Sep 10", () => {
+    expect(
+      daysBetween(new Date("2026-08-30T20:00:00Z"), new Date("2026-09-10T21:00:00Z")),
+    ).toBe(11);
   });
 });
 
