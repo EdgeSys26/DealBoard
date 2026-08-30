@@ -45,7 +45,7 @@ export default async function SettingsPage() {
           <button className="btn-secondary" type="submit">Log out</button>
         </form>
         <form action={deleteAccountAction}>
-          <button className="text-sm text-red-600 font-semibold w-full" type="submit">
+          <button className="text-sm text-grade-d font-semibold w-full" type="submit">
             Delete account
           </button>
         </form>

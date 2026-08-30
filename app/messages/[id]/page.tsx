@@ -33,14 +33,14 @@ export default async function ThreadPage({
         <Link href="/messages" className="text-sm font-semibold text-accent">← Inbox</Link>
         <h1 className="font-semibold">{thread.listing.address}</h1>
         {thread.frozen ? (
-          <p className="text-xs text-amber-800 mt-1">{thread.freezeNote}</p>
+          <p className="text-xs text-grade-d mt-1">{thread.freezeNote}</p>
         ) : null}
       </header>
       <main className="flex-1 px-4 space-y-2 pb-4">
         {thread.messages.map((m) => (
           <div
             key={m.id}
-            className={`card p-3 text-sm ${m.system ? "bg-[#fff7ed]" : m.senderId === user.id ? "ml-8" : "mr-8"}`}
+            className={`card p-3 text-sm ${m.system ? "surface-system" : m.senderId === user.id ? "ml-8" : "mr-8"}`}
           >
             <p className="text-[11px] font-bold text-muted">
               {m.system ? "System" : m.senderId === user.id ? "You" : m.sender.name}

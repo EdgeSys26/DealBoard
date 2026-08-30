@@ -38,7 +38,7 @@ export default async function DealsPage() {
                 {usd(o.price)} · deposit {usd(o.deposit)} · {o.status.toLowerCase()}
               </p>
               {accepted && title ? (
-                <div className="rounded-xl bg-[#eef2ff] p-3 text-sm space-y-1">
+                <div className="rounded-xl surface-accent p-3 text-sm space-y-1">
                   <p className="font-semibold">{title.company}</p>
                   <p>File #{title.fileNumber}</p>
                   <p>{usd(title.depositAmount)} to title</p>

@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
       "Wholesale assignment marketplace. Independent of Frontburner and Edge.Sys.",
     start_url: "/",
     display: "standalone",
-    background_color: "#E6E7EC",
+    background_color: "#E8EAEE",
     theme_color: "#1A4DFF",
     icons: [
       { src: "/icons/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },

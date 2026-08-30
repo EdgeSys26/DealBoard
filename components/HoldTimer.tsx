@@ -11,7 +11,7 @@ export function HoldTimer({ expiresAt }: { expiresAt: Date | string }) {
   }, [expiresAt]);
 
   if (left <= 0) {
-    return <p className="text-sm font-semibold text-red-600">Hold dropped</p>;
+    return <p className="text-sm font-semibold text-grade-d">Hold dropped</p>;
   }
   const h = Math.floor(left / 3600000);
   const m = Math.floor((left % 3600000) / 60000);

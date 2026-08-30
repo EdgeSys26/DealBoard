@@ -64,7 +64,7 @@ export default async function HomePage() {
             const letter = (grade?.letter ?? "?") as Letter;
             return (
               <Link key={listing.id} href={`/listings/${listing.id}`} className="card overflow-hidden block">
-                <div className="relative h-44 bg-[#d9dce6]">
+                <div className="relative h-44 bg-canvas">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photos[0]} alt="" className="h-full w-full object-cover" />
                   <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>

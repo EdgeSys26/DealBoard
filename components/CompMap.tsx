@@ -42,16 +42,16 @@ export function CompMap({
 
   return (
     <div>
-      <div className="relative h-52 overflow-hidden rounded-2xl bg-[#d7e3d4] border border-line">
+      <div className="relative h-52 overflow-hidden rounded-2xl bg-canvas border border-line">
         <div
           className="absolute inset-0 opacity-70"
           style={{
             backgroundImage:
-              "linear-gradient(#c9d4c6 1px, transparent 1px), linear-gradient(90deg, #c9d4c6 1px, transparent 1px)",
+              "linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px)",
             backgroundSize: "28px 28px",
           }}
         />
-        <p className="absolute top-2 right-2 text-[10px] font-semibold bg-white/80 px-2 py-1 rounded-full">
+        <p className="absolute top-2 right-2 text-[10px] font-semibold bg-card/80 px-2 py-1 rounded-full">
           Noblesville comps
         </p>
         {points.map((p) => {
@@ -66,7 +66,7 @@ export function CompMap({
             >
               <span
                 className={`block rounded-full border-2 border-white shadow ${
-                  subjectPin ? "h-4 w-4 bg-accent" : "h-3 w-3 bg-[#111827]"
+                  subjectPin ? "h-4 w-4 bg-accent" : "h-3 w-3 bg-ink"
                 }`}
               />
             </div>

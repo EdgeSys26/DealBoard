@@ -58,7 +58,7 @@ export default async function ListingPage({
       </header>
       <main className="flex-1 px-4 pb-6 space-y-3">
         <div className="card overflow-hidden">
-          <div className="relative h-52 bg-[#d9dce6]">
+          <div className="relative h-52 bg-canvas">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photos[0]} alt="" className="h-full w-full object-cover" />
             <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
@@ -94,7 +94,7 @@ export default async function ListingPage({
               <span className="text-sm font-medium text-muted">({grade.score})</span>
             </p>
             {grade.gateFails.length ? (
-              <p className="text-sm text-red-600 mb-3">{grade.gateFails.join(" · ")}</p>
+              <p className="text-sm text-grade-d mb-3">{grade.gateFails.join(" · ")}</p>
             ) : null}
             <GradeBars grade={grade} />
           </section>
@@ -289,7 +289,7 @@ function TitleCard({
         </form>
       ))}
       {showWire ? (
-        <div className="mt-2 rounded-xl bg-[#eef2ff] p-3 text-sm">
+        <div className="mt-2 rounded-xl surface-accent p-3 text-sm">
           <p className="font-semibold">Wire (from title only)</p>
           <p>Routing {titleFile.routingNumber}</p>
           <p>Account {titleFile.accountNumber}</p>

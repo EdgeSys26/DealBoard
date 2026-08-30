@@ -27,7 +27,7 @@ export default async function MessagesPage() {
           <Link key={t.id} href={`/messages/${t.id}`} className="card p-4 block">
             <div className="flex justify-between">
               <p className="font-semibold">{t.listing.address}</p>
-              {t.frozen ? <span className="text-xs font-semibold text-amber-700">Frozen</span> : null}
+              {t.frozen ? <span className="text-xs font-semibold text-grade-d">Frozen</span> : null}
             </div>
             <p className="text-sm text-muted line-clamp-2 mt-1">
               {t.messages[0]?.body ?? "No messages"}
