@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { RegisterSW } from "@/components/RegisterSW";
+import { AppChrome } from "@/components/AppChrome";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -23,6 +24,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = {
   themeColor: "#1A4DFF",
   width: "device-width",
@@ -40,7 +43,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geist.variable} antialiased`}>
         <RegisterSW />
-        <div className="phone-shell">{children}</div>
+        <div className="phone-shell">
+          <AppChrome>{children}</AppChrome>
+        </div>
       </body>
     </html>
   );

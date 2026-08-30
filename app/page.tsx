@@ -45,17 +45,20 @@ export default async function LoginPage() {
             </Link>
           </>
         ) : null}
-        <form action={demoLoginAction.bind(null, "BUYER")}>
+        <form action={demoLoginAction}>
+          <input type="hidden" name="role" value="BUYER" />
           <button className={user ? "btn-secondary" : "btn-primary"} type="submit">
             Enter as buyer
           </button>
         </form>
-        <form action={demoLoginAction.bind(null, "SELLER")}>
+        <form action={demoLoginAction}>
+          <input type="hidden" name="role" value="SELLER" />
           <button className="btn-secondary" type="submit">
             Enter as seller
           </button>
         </form>
-        <form action={demoLoginAction.bind(null, "ADMIN")}>
+        <form action={demoLoginAction}>
+          <input type="hidden" name="role" value="ADMIN" />
           <button className="btn-secondary" type="submit">
             Enter as admin
           </button>

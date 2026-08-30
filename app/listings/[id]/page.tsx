@@ -10,7 +10,6 @@ import {
   sendMessageAction,
 } from "@/lib/actions";
 import { BuyerNav, SellerNav } from "@/components/Nav";
-import { SwitchRoleButton } from "@/components/SwitchRoleButton";
 import { GradeBars } from "@/components/GradeBars";
 import { CompMap } from "@/components/CompMap";
 import { HoldTimer } from "@/components/HoldTimer";
@@ -33,10 +32,7 @@ export default async function ListingPage({
   if (!data) notFound();
   if (data.hidden) {
     return (
-      <div className="min-h-svh px-4 pt-16">
-        <div className="flex justify-end">
-          <SwitchRoleButton />
-        </div>
+      <div className="min-h-svh px-4 pt-6">
         <p className="font-semibold">This listing is on hold</p>
         <p className="text-sm text-muted mt-2">
           On-hold contracts are hidden from buyers — no feed, search, or messages.
@@ -55,11 +51,10 @@ export default async function ListingPage({
 
   return (
     <div className="min-h-svh flex flex-col">
-      <header className="px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2 flex items-center justify-between">
+      <header className="px-4 pt-3 pb-2">
         <Link href={user.role === "SELLER" ? "/seller" : "/home"} className="text-sm font-semibold text-accent">
           ← Back
         </Link>
-        <SwitchRoleButton />
       </header>
       <main className="flex-1 px-4 pb-6 space-y-3">
         <div className="card overflow-hidden">

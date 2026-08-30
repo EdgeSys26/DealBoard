@@ -35,8 +35,10 @@ export async function loginAction(formData: FormData) {
   redirect("/home");
 }
 
-export async function demoLoginAction(role: "BUYER" | "SELLER" | "ADMIN") {
+export async function demoLoginAction(formData: FormData) {
   await ensureDemoDb();
+  const role = String(formData.get("role") || "").toUpperCase();
+  if (role !== "BUYER" && role !== "SELLER" && role !== "ADMIN") return;
   const email =
     role === "BUYER"
       ? "buyer@dealboard.local"

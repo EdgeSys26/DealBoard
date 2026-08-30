@@ -4,7 +4,6 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendMessageAction } from "@/lib/actions";
 import { BuyerNav, SellerNav } from "@/components/Nav";
-import { SwitchRoleButton } from "@/components/SwitchRoleButton";
 
 export const dynamic = "force-dynamic";
 
@@ -30,11 +29,8 @@ export default async function ThreadPage({
 
   return (
     <div className="min-h-svh flex flex-col">
-      <header className="px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
-        <div className="flex items-center justify-between">
-          <Link href="/messages" className="text-sm font-semibold text-accent">← Inbox</Link>
-          <SwitchRoleButton />
-        </div>
+      <header className="px-4 pt-3 pb-2">
+        <Link href="/messages" className="text-sm font-semibold text-accent">← Inbox</Link>
         <h1 className="font-semibold">{thread.listing.address}</h1>
         {thread.frozen ? (
           <p className="text-xs text-grade-d mt-1">{thread.freezeNote}</p>

@@ -40,6 +40,15 @@ export async function verifyPassword(
   return bcrypt.compare(password, hash);
 }
 
+function cookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    path: "/",
+    secure: process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL),
+  };
+}
+
 export async function createSession(userId: string) {
   const token = await new SignJWT({ sub: userId })
     .setProtectedHeader({ alg: "HS256" })
@@ -48,17 +57,18 @@ export async function createSession(userId: string) {
     .sign(secret());
   const jar = await cookies();
   jar.set(COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
+    ...cookieOptions(),
     maxAge: 60 * 60 * 24 * 14,
-    secure: process.env.NODE_ENV === "production",
   });
 }
 
 export async function clearSession() {
   const jar = await cookies();
-  jar.delete(COOKIE);
+  jar.set(COOKIE, "", {
+    ...cookieOptions(),
+    maxAge: 0,
+    expires: new Date(0),
+  });
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
