@@ -10,12 +10,14 @@ import {
   requireUser,
   verifyPassword,
 } from "./auth";
+import { ensureDemoDb } from "./ensure-demo";
 import { refreshGradesForBox } from "./grade-listing";
 import { applyLifecycle, freezeThreads, onHoldCapDate, unfreezeThreads } from "./lifecycle";
 import { assertOfferFloor, tightenFloorPct } from "./offer-floor";
 import { HOLD_MS, NOBLESVILLE_SQUARE, type AlertMode, type WorkLevel } from "./types";
 
 export async function loginAction(formData: FormData) {
+  await ensureDemoDb();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
   const user = await prisma.user.findUnique({ where: { email } });
@@ -34,6 +36,7 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function demoLoginAction(role: "BUYER" | "SELLER" | "ADMIN") {
+  await ensureDemoDb();
   const email =
     role === "BUYER"
       ? "buyer@dealboard.local"

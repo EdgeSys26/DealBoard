@@ -56,6 +56,8 @@ REAPI_API_KEY=""
 
 No Zillow or county scrapes. If `RENTCAST_API_KEY` or `REAPI_API_KEY` is present, new listings can be tagged as live AVM. Otherwise Noblesville fixtures use a **clearly labeled mock AVM**.
 
+On Vercel the filesystem is read-only except `/tmp`. Preview copies `prisma/demo.template.db` to `/tmp/dealboard.db` on boot and seeds demo users if the file is empty. Local `npm run db:setup` still uses `prisma/dev.db`.
+
 Deal Board does not read Frontburner or Edge.Sys env vars.
 
 ## Scripts

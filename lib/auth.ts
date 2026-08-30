@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { ensureDemoDb } from "./ensure-demo";
 import type { Role } from "./types";
 
 const COOKIE = "dealboard_session";
@@ -61,6 +62,7 @@ export async function clearSession() {
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
+  await ensureDemoDb();
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
