@@ -1,0 +1,124 @@
+import { describe, expect, it } from "vitest";
+import { gradeListing, leftover } from "./grade";
+import { NOBLESVILLE_SQUARE } from "./types";
+import { minOfferPrice, assertOfferFloor, tightenFloorPct } from "./offer-floor";
+import { haversineMiles } from "./geo";
+
+const demoBox = {
+  lat: NOBLESVILLE_SQUARE.lat,
+  lng: NOBLESVILLE_SQUARE.lng,
+  radiusMiles: 8,
+  maxAssignmentPrice: 250_000,
+  minBeds: 3,
+  minSf: null,
+  workLevels: ["MEDIUM", "FULL_GUT"] as const,
+  maxRehab: null,
+};
+
+const pleasant = {
+  lat: 40.0442,
+  lng: -86.0189,
+  assignmentPrice: 189_000,
+  platformAvm: 278_000,
+  beds: 3,
+  baths: 1,
+  sf: 1216,
+  workLevel: "MEDIUM" as const,
+  rehabEstimate: 12_000,
+  verified: true,
+  sellerBadge: "SILVER" as const,
+  hasWalkthrough: true,
+  photoCount: 4,
+  daysRemaining: 11,
+};
+
+const cicero = {
+  lat: 40.0498,
+  lng: -86.0134,
+  assignmentPrice: 241_000,
+  platformAvm: 300_000,
+  beds: 3,
+  baths: 2,
+  sf: 1408,
+  workLevel: "MEDIUM" as const,
+  rehabEstimate: 35_000,
+  verified: true,
+  sellerBadge: "SILVER" as const,
+  hasWalkthrough: true,
+  photoCount: 4,
+  daysRemaining: 6,
+};
+
+const harbour = {
+  lat: 40.0701,
+  lng: -86.0588,
+  assignmentPrice: 319_000,
+  platformAvm: 328_000,
+  beds: 2,
+  baths: 2,
+  sf: 1104,
+  workLevel: "PAINT_CARPET" as const,
+  rehabEstimate: 8_000,
+  verified: false,
+  sellerBadge: "GREEN" as const,
+  hasWalkthrough: false,
+  photoCount: 2,
+  daysRemaining: 13,
+};
+
+describe("Noblesville fixtures", () => {
+  it("grades 1847 Pleasant St as A+", () => {
+    const g = gradeListing(pleasant, { ...demoBox, workLevels: [...demoBox.workLevels] });
+    expect(g.isFit).toBe(true);
+    expect(g.letter).toBe("A+");
+    expect(g.score).toBeGreaterThanOrEqual(90);
+  });
+
+  it("grades 622 Cicero Ave as B", () => {
+    const g = gradeListing(cicero, { ...demoBox, workLevels: [...demoBox.workLevels] });
+    expect(g.isFit).toBe(true);
+    expect(g.letter).toBe("B");
+  });
+
+  it("buries 401 Harbour Trees as No fit", () => {
+    const g = gradeListing(harbour, { ...demoBox, workLevels: [...demoBox.workLevels] });
+    expect(g.isFit).toBe(false);
+    expect(g.letter).toBe("NO_FIT");
+    expect(g.gateFails.length).toBeGreaterThan(0);
+  });
+
+  it("never awards A/A+ without an AVM", () => {
+    const g = gradeListing(
+      { ...pleasant, platformAvm: null },
+      { ...demoBox, workLevels: [...demoBox.workLevels] },
+    );
+    expect(g.letter === "A+" || g.letter === "A").toBe(false);
+  });
+
+  it("does not use seller ARV in leftover math", () => {
+    const math = leftover(278_000, 189_000, 12_000);
+    expect(math).toBe(77_000);
+  });
+});
+
+describe("geo", () => {
+  it("places all three fixtures inside an 8-mile Noblesville box", () => {
+    for (const p of [pleasant, cicero, harbour]) {
+      expect(haversineMiles(NOBLESVILLE_SQUARE, p)).toBeLessThan(8);
+    }
+  });
+});
+
+describe("offer floor", () => {
+  it("blocks more than 10% below asking", () => {
+    expect(minOfferPrice(189_000)).toBe(170_100);
+    expect(assertOfferFloor(170_000, 189_000).ok).toBe(false);
+    expect(assertOfferFloor(170_100, 189_000).ok).toBe(true);
+    expect(assertOfferFloor(250_000, 189_000).ok).toBe(true);
+  });
+
+  it("lets the seller tighten but not loosen the floor", () => {
+    expect(tightenFloorPct(10, 5)).toBe(5);
+    expect(tightenFloorPct(5, 10)).toBe(5);
+  });
+});
