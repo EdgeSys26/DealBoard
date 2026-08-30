@@ -1,4 +1,5 @@
 {
   "framework": "nextjs",
+  "installCommand": "node unpack.mjs && npm install",
   "buildCommand": "prisma generate && next build"
 }
