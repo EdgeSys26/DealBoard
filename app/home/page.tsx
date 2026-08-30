@@ -7,7 +7,7 @@ import { TopBar } from "@/components/TopBar";
 import { BuyerNav } from "@/components/Nav";
 import { compactUsd, usd } from "@/lib/money";
 import { BADGE_LABEL, WORK_LEVEL_LABEL, type Letter, type WorkLevel } from "@/lib/types";
-import { letterTone } from "@/lib/queries";
+import { displayGradeLabel, letterTone } from "@/lib/queries";
 import { daysBetween } from "@/lib/geo";
 
 export const dynamic = "force-dynamic";
@@ -67,7 +67,7 @@ export default async function HomePage() {
                 <div className="relative h-44 bg-[#d9dce6]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photos[0]} alt="" className="h-full w-full object-cover" />
-                  <span className={`grade-pill ${letterTone(letter)}`}>{letter}</span>
+                  <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
                   {listing.verified ? (
                     <span className="absolute top-2 right-2 text-[11px] font-bold bg-white/90 px-2 py-1 rounded-full">
                       Verified

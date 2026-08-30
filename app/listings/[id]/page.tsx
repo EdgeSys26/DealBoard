@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { getListingDetail, letterTone } from "@/lib/queries";
+import { displayGradeLabel, getListingDetail, letterTone } from "@/lib/queries";
 import {
   favoriteAction,
   holdListingAction,
@@ -61,7 +61,7 @@ export default async function ListingPage({
           <div className="relative h-52 bg-[#d9dce6]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photos[0]} alt="" className="h-full w-full object-cover" />
-            <span className={`grade-pill ${letterTone(letter)}`}>{letter}</span>
+            <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
           </div>
           <div className="p-4">
             <div className="flex justify-between">
@@ -86,8 +86,12 @@ export default async function ListingPage({
 
         {grade ? (
           <section className="card p-4">
-            <p className="font-semibold mb-3">
-              Your grade · {grade.letter} ({grade.score})
+            <p className="font-semibold mb-3 flex items-center gap-2">
+              Your grade
+              <span className={`grade-chip ${letterTone(grade.letter)}`}>
+                {displayGradeLabel(grade.letter)}
+              </span>
+              <span className="text-sm font-medium text-muted">({grade.score})</span>
             </p>
             {grade.gateFails.length ? (
               <p className="text-sm text-red-600 mb-3">{grade.gateFails.join(" · ")}</p>

@@ -1,16 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --canvas: #e6e7ec;
+  --canvas: #d5dbe6;
   --card: #ffffff;
-  --ink: #14161c;
-  --muted: #5c6370;
-  --line: #d8dae2;
+  --ink: #0e1218;
+  --muted: #3f4754;
+  --line: #c9d0dc;
   --accent: #1a4dff;
+  --accent-btn: #2456ff;
   --accent-ink: #ffffff;
-  --green: #1f9d55;
-  --yellow: #d97706;
-  --red: #dc2626;
+  --grade-mint: 57, 255, 136;
+  --grade-amber: 255, 214, 10;
+  --grade-rose: 255, 59, 107;
   --safe-bottom: env(safe-area-inset-bottom);
 }
 
@@ -31,7 +32,7 @@
 html,
 body {
   min-height: 100%;
-  background: #c9ccd6;
+  background: #9aa6b8;
   color: var(--ink);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
@@ -46,17 +47,18 @@ body {
   margin: 0 auto;
   background: var(--canvas);
   position: relative;
-  box-shadow: 0 0 0 1px rgba(20, 22, 28, 0.06), 0 24px 60px rgba(20, 22, 28, 0.18);
+  box-shadow: 0 0 0 1px rgba(14, 18, 24, 0.08), 0 28px 64px rgba(14, 18, 24, 0.22);
 }
 
 .card {
   background: var(--card);
-  border-radius: 18px;
-  box-shadow: 0 1px 0 rgba(20, 22, 28, 0.04), 0 10px 24px rgba(20, 22, 28, 0.06);
+  border-radius: 22px;
+  border: 1px solid rgba(14, 18, 24, 0.08);
+  box-shadow: 0 1px 2px rgba(14, 18, 24, 0.04), 0 14px 32px rgba(14, 18, 24, 0.07);
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--accent-btn);
   color: white;
   border: 0;
   border-radius: 14px;
@@ -77,38 +79,73 @@ body {
   font-size: 15px;
 }
 
+.grade-pill,
+.grade-chip {
+  display: inline-grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  border: 1px solid transparent;
+  backdrop-filter: blur(12px) saturate(1.35);
+  -webkit-backdrop-filter: blur(12px) saturate(1.35);
+}
+
 .grade-pill {
   position: absolute;
   top: 10px;
   left: 10px;
-  min-width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 9px;
+  border-radius: 13px;
   font-size: 15px;
-  color: white;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
 
-.grade-pill.green {
-  background: var(--green);
+.grade-chip {
+  position: static;
+  min-width: 36px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
 }
-.grade-pill.yellow {
-  background: var(--yellow);
+
+.grade-pill.green,
+.grade-chip.green {
+  background: rgba(var(--grade-mint), 0.28);
+  border-color: rgba(var(--grade-mint), 0.9);
+  box-shadow:
+    0 0 0 1px rgba(var(--grade-mint), 0.22),
+    0 0 18px rgba(var(--grade-mint), 0.5);
 }
-.grade-pill.red {
-  background: var(--red);
+
+.grade-pill.yellow,
+.grade-chip.yellow {
+  background: rgba(var(--grade-amber), 0.28);
+  border-color: rgba(var(--grade-amber), 0.92);
+  box-shadow:
+    0 0 0 1px rgba(var(--grade-amber), 0.22),
+    0 0 18px rgba(var(--grade-amber), 0.48);
 }
-.grade-pill.gray {
-  background: #6b7280;
+
+.grade-pill.red,
+.grade-chip.red,
+.grade-pill.gray,
+.grade-chip.gray {
+  background: rgba(var(--grade-rose), 0.28);
+  border-color: rgba(var(--grade-rose), 0.9);
+  box-shadow:
+    0 0 0 1px rgba(var(--grade-rose), 0.22),
+    0 0 18px rgba(var(--grade-rose), 0.48);
 }
 
 .bar {
   height: 8px;
   border-radius: 99px;
-  background: #eceef3;
+  background: #e6eaf1;
   overflow: hidden;
 }
 
@@ -136,8 +173,8 @@ label.field {
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
+  font-weight: 650;
+  color: #343b48;
 }
 
 .chip {

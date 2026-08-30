@@ -150,8 +150,14 @@ export async function getAdminData() {
 }
 
 export function letterTone(letter: Letter | string | undefined) {
-  if (letter === "A+" || letter === "A") return "green";
-  if (letter === "B") return "yellow";
-  if (letter === "NO_FIT") return "gray";
+  const key = (letter ?? "").toUpperCase();
+  if (key.startsWith("A")) return "green";
+  if (key.startsWith("B")) return "yellow";
   return "red";
+}
+
+export function displayGradeLabel(letter: Letter | string | undefined) {
+  if (!letter || letter === "—") return "—";
+  if (letter === "NO_FIT") return "No fit";
+  return letter;
 }
