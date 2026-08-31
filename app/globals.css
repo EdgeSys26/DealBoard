@@ -1,0 +1,220 @@
+@import "tailwindcss";
+
+:root {
+  --canvas: #E8EAEE;
+  --card: #FFFFFF;
+  --ink: #0B1220;
+  --muted: #5C6570;
+  --line: #E2E6EE;
+  --accent: #1A4DFF;
+  --accent-press: #143FCC;
+  --grade-a: #22F07A;
+  --grade-b: #FFD60A;
+  --grade-d: #FF2D6A;
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-press: var(--accent-press);
+  --color-grade-a: var(--grade-a);
+  --color-grade-b: var(--grade-b);
+  --color-grade-d: var(--grade-d);
+  --font-sans: var(--font-geist-sans);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  min-height: 100%;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+.phone-shell {
+  width: min(100%, 430px);
+  min-height: 100svh;
+  margin: 0 auto;
+  background: var(--canvas);
+  position: relative;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent),
+    0 28px 64px color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.card {
+  background: var(--card);
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--ink) 4%, transparent),
+    0 14px 32px color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--card);
+  border: 0;
+  border-radius: 14px;
+  font-weight: 600;
+  padding: 14px 16px;
+  width: 100%;
+  font-size: 16px;
+}
+
+.btn-primary:active,
+.btn-primary:hover {
+  background: var(--accent-press);
+}
+
+.btn-primary:disabled {
+  background: var(--muted);
+}
+
+.btn-secondary {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-weight: 600;
+  padding: 14px 16px;
+  width: 100%;
+  font-size: 15px;
+}
+
+.surface-accent {
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+.surface-system {
+  background: color-mix(in srgb, var(--line) 70%, var(--card));
+}
+
+.grade-pill,
+.grade-chip {
+  display: inline-grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--card);
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 55%, transparent);
+  border: 1px solid transparent;
+  backdrop-filter: blur(12px) saturate(1.35);
+  -webkit-backdrop-filter: blur(12px) saturate(1.35);
+}
+
+.grade-pill {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 9px;
+  border-radius: 13px;
+  font-size: 15px;
+  z-index: 1;
+}
+
+.grade-chip {
+  position: static;
+  min-width: 36px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.grade-pill.green,
+.grade-chip.green {
+  background: color-mix(in srgb, var(--grade-a) 28%, transparent);
+  border-color: var(--grade-a);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--grade-a) 22%, transparent),
+    0 0 18px color-mix(in srgb, var(--grade-a) 50%, transparent);
+}
+
+.grade-pill.yellow,
+.grade-chip.yellow {
+  background: color-mix(in srgb, var(--grade-b) 28%, transparent);
+  border-color: var(--grade-b);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--grade-b) 22%, transparent),
+    0 0 18px color-mix(in srgb, var(--grade-b) 48%, transparent);
+}
+
+.grade-pill.red,
+.grade-chip.red,
+.grade-pill.gray,
+.grade-chip.gray {
+  background: color-mix(in srgb, var(--grade-d) 28%, transparent);
+  border-color: var(--grade-d);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--grade-d) 22%, transparent),
+    0 0 18px color-mix(in srgb, var(--grade-d) 48%, transparent);
+}
+
+.bar {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 12px;
+  font: inherit;
+  background: var(--card);
+  color: var(--ink);
+}
+
+label.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chip[data-on="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}

@@ -1,0 +1,286 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id
+  email          String   @unique
+  passwordHash   String
+  role           String
+  name           String
+  phone          String
+  entityName     String?
+  badge          String   @default("GREEN")
+  fundedCloses   Int      @default(0)
+  lookingStatus  String   @default("LOOKING")
+  blacklisted    Boolean  @default(false)
+  blacklistNote  String?
+  pofOnFile      Boolean  @default(false)
+  entityOnFile   Boolean  @default(false)
+  w9OnFile       Boolean  @default(false)
+  quietHours     Boolean  @default(true)
+  deletedAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  buyBoxes           BuyBox[]
+  listings           Listing[]
+  holds              Hold[]
+  offers             Offer[]
+  favorites          Favorite[]
+  mutes              Mute[]      @relation("Muter")
+  mutedBy            Mute[]      @relation("Muted")
+  strikes            Strike[]
+  blasts             Blast[]
+  reports            Report[]
+  messagesSent       Message[]   @relation("Sender")
+  threadsAsBuyer     Thread[]    @relation("BuyerThreads")
+  threadsAsSeller    Thread[]    @relation("SellerThreads")
+  workAgainGiven     WorkAgain[] @relation("FromUser")
+  workAgainReceived  WorkAgain[] @relation("ToUser")
+}
+
+model BuyBox {
+  id                 String   @id
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  centerLabel        String
+  zip                String?
+  lat                Float
+  lng                Float
+  radiusMiles        Float
+  maxAssignmentPrice Int
+  minBeds            Int?
+  minSf              Int?
+  workLevels         String
+  maxRehab           Int?
+  alertMode          String   @default("A_AND_B")
+  updatedAt          DateTime @updatedAt
+  grades             GradeCache[]
+}
+
+model Listing {
+  id                    String   @id
+  sellerId              String
+  seller                User     @relation(fields: [sellerId], references: [id])
+  address               String
+  city                  String
+  state                 String
+  zip                   String
+  lat                   Float
+  lng                   Float
+  assignmentPrice       Int
+  originalContractPrice Int
+  sellerArv             Int?
+  sellerRepairs         Int?
+  platformAvm           Int?
+  avmSource             String   @default("mock")
+  beds                  Int
+  baths                 Float
+  sf                    Int
+  occupancy             String
+  access                String
+  contractExpiresAt     DateTime
+  knownIssues           String
+  photosJson            String
+  walkthroughUrl        String?
+  hasWalkthrough        Boolean  @default(false)
+  contractUploaded      Boolean  @default(false)
+  verified              Boolean  @default(false)
+  workLevel             String
+  rehabEstimate         Int
+  status                String   @default("ACTIVE")
+  offerFloorPct         Float    @default(10)
+  liveStartedAt         DateTime
+  onHoldUntil           DateTime?
+  views                 Int      @default(0)
+  createdAt             DateTime @default(now())
+
+  comps      CompSnapshot[]
+  grades     GradeCache[]
+  holds      Hold[]
+  offers     Offer[]
+  titleFile  TitleFile?
+  titleSlots TitleSlot[]
+  favorites  Favorite[]
+  blasts     Blast[]
+  reports    Report[]
+  threads    Thread[]
+}
+
+model CompSnapshot {
+  id         String  @id @default(cuid())
+  listingId  String
+  listing    Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  address    String
+  salePrice  Int
+  beds       Int
+  baths      Float
+  sf         Int
+  lat        Float
+  lng        Float
+  distanceMi Float
+  soldDate   String
+}
+
+model GradeCache {
+  id         String   @id @default(cuid())
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyBoxId   String
+  buyBox     BuyBox   @relation(fields: [buyBoxId], references: [id], onDelete: Cascade)
+  letter     String
+  score      Float
+  isFit      Boolean
+  barsJson   String
+  computedAt DateTime @default(now())
+
+  @@unique([listingId, buyBoxId])
+}
+
+model Hold {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId   String
+  buyer     User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  released  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Offer {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId     String
+  buyer       User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  price       Int
+  deposit     Int
+  closeDate   DateTime
+  status      String   @default("PENDING")
+  pofAttached Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  titleFile   TitleFile?
+}
+
+model TitleFile {
+  id            String  @id
+  listingId     String  @unique
+  listing       Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  offerId       String? @unique
+  offer         Offer?  @relation(fields: [offerId], references: [id])
+  company       String
+  fileNumber    String
+  depositAmount Int
+  officeAddress String
+  routingNumber String?
+  accountNumber String?
+  wireReleased  Boolean @default(false)
+  selectedSlotId String?
+  slots         TitleSlot[]
+}
+
+model TitleSlot {
+  id          String     @id @default(cuid())
+  listingId   String
+  listing     Listing    @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  titleFileId String?
+  titleFile   TitleFile? @relation(fields: [titleFileId], references: [id])
+  startsAt    DateTime
+  location    String
+  kind        String
+  selected    Boolean    @default(false)
+}
+
+model Favorite {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  kind      String
+
+  @@unique([userId, listingId])
+}
+
+model Mute {
+  id          String @id @default(cuid())
+  userId      String
+  user        User   @relation("Muter", fields: [userId], references: [id], onDelete: Cascade)
+  mutedUserId String
+  mutedUser   User   @relation("Muted", fields: [mutedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mutedUserId])
+}
+
+model Strike {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason    String
+  createdAt DateTime @default(now())
+}
+
+model Blast {
+  id        String   @id @default(cuid())
+  sellerId  String
+  seller    User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  listingId String?
+  listing   Listing? @relation(fields: [listingId], references: [id])
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  reporterId String
+  reporter   User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  type       String
+  notes      String
+  status     String   @default("OPEN")
+  createdAt  DateTime @default(now())
+}
+
+model Thread {
+  id         String    @id @default(cuid())
+  listingId  String
+  listing    Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId    String
+  buyer      User      @relation("BuyerThreads", fields: [buyerId], references: [id])
+  sellerId   String
+  seller     User      @relation("SellerThreads", fields: [sellerId], references: [id])
+  frozen     Boolean   @default(false)
+  freezeNote String?
+  messages   Message[]
+
+  @@unique([listingId, buyerId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  threadId  String
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation("Sender", fields: [senderId], references: [id])
+  body      String
+  system    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model WorkAgain {
+  id         String @id @default(cuid())
+  fromUserId String
+  fromUser   User   @relation("FromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   String
+  toUser     User   @relation("ToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+  listingId  String
+  yes        Boolean
+}
