@@ -469,31 +469,45 @@ export async function sendBlastAction(formData: FormData) {
 
 export async function createListingAction(formData: FormData) {
   const user = await requireUser();
-  if (user.role !== "SELLER") return;
+  if (user.role !== "SELLER" && user.role !== "ADMIN") {
+    redirect("/home");
+  }
+  const sellerId = user.role === "ADMIN" ? "user_seller" : user.id;
   const walkthrough = String(formData.get("hasWalkthrough")) === "on";
   const photos = ["/listings/new-1.svg"];
+  const assignmentPrice = Number(formData.get("assignmentPrice"));
+  const sellerArv = Number(formData.get("sellerArv") || 0) || null;
+  const liveAvm = Boolean(process.env.RENTCAST_API_KEY || process.env.REAPI_API_KEY);
+  const explicitAvm = Number(formData.get("platformAvm") || 0) || null;
+  const platformAvm =
+    explicitAvm ||
+    (liveAvm ? null : sellerArv || Math.round(assignmentPrice * 1.35));
+  const expiresAt = new Date(String(formData.get("contractExpiresAt")));
+  if (Number.isNaN(expiresAt.getTime())) {
+    throw new Error("Contract expiration is required");
+  }
   const listing = await prisma.listing.create({
     data: {
       id: `listing_${Date.now()}`,
-      sellerId: user.id,
+      sellerId,
       address: String(formData.get("address")),
       city: String(formData.get("city") || "Noblesville"),
       state: "IN",
       zip: String(formData.get("zip") || "46060"),
       lat: NOBLESVILLE_SQUARE.lat + 0.01,
       lng: NOBLESVILLE_SQUARE.lng - 0.01,
-      assignmentPrice: Number(formData.get("assignmentPrice")),
+      assignmentPrice,
       originalContractPrice: Number(formData.get("originalContractPrice")),
-      sellerArv: Number(formData.get("sellerArv") || 0) || null,
+      sellerArv,
       sellerRepairs: Number(formData.get("sellerRepairs") || 0) || null,
-      platformAvm: Number(formData.get("platformAvm") || 0) || null,
-      avmSource: process.env.RENTCAST_API_KEY || process.env.REAPI_API_KEY ? "live" : "mock",
+      platformAvm,
+      avmSource: liveAvm ? "live" : "mock",
       beds: Number(formData.get("beds")),
       baths: Number(formData.get("baths")),
       sf: Number(formData.get("sf")),
       occupancy: String(formData.get("occupancy") || "Vacant"),
       access: String(formData.get("access") || "TBD"),
-      contractExpiresAt: new Date(String(formData.get("contractExpiresAt"))),
+      contractExpiresAt: expiresAt,
       knownIssues: String(formData.get("knownIssues") || ""),
       photosJson: JSON.stringify(photos),
       hasWalkthrough: walkthrough,
@@ -506,12 +520,14 @@ export async function createListingAction(formData: FormData) {
       liveStartedAt: new Date(),
     },
   });
+  console.log("createListingAction persisted", listing.id, listing.address, listing.sellerId);
   const boxes = await prisma.buyBox.findMany();
   for (const box of boxes) {
     const { gradeAndCache } = await import("./grade-listing");
     await gradeAndCache(listing.id, box.id);
   }
   revalidatePath("/seller");
+  revalidatePath("/home");
   redirect("/seller");
 }
 
