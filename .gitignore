@@ -35,12 +35,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# sqlite
-/prisma/dev.db
-/prisma/dev.db-journal
+# local sqlite leftovers (app uses Postgres)
 /prisma/*.db
 /prisma/*.db-journal
-!/prisma/demo.template.db
 
 # vercel
 .vercel

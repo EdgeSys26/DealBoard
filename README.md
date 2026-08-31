@@ -66,7 +66,7 @@ Deal Board does not read Frontburner or Edge.Sys env vars.
 | --- | --- |
 | `npm run dev` | Generate Prisma client if needed, then Next.js |
 | `npm run db:setup` | `prisma generate`, `db push`, seed |
-| `npm run db:seed` | Re-seed demo users and Noblesville fixtures |
+| `npm run db:seed` | Seed demo users and Noblesville fixtures only if the database is empty |
 | `npm test` | Grade / offer-floor / geo tests |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
