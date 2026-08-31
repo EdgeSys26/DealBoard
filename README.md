@@ -48,7 +48,7 @@ Required tables: `User`, `BuyBox`, `Listing`, `CompSnapshot`, `GradeCache`, `Hol
 Copy `.env.example` to `.env` (already done for local demo):
 
 ```
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:6543/postgres?sslmode=require&pgbouncer=true"
 AUTH_SECRET="replace-with-a-long-random-string"
 RENTCAST_API_KEY=""
 REAPI_API_KEY=""
@@ -56,7 +56,7 @@ REAPI_API_KEY=""
 
 No Zillow or county scrapes. If `RENTCAST_API_KEY` or `REAPI_API_KEY` is present, new listings can be tagged as live AVM. Otherwise Noblesville fixtures use a **clearly labeled mock AVM**.
 
-On Vercel the filesystem is read-only except `/tmp`. Preview copies `prisma/demo.template.db` to `/tmp/dealboard.db` on boot and seeds demo users if the file is empty. Local `npm run db:setup` still uses `prisma/dev.db`.
+Production uses a persistent Postgres `DATABASE_URL`. Demo Noblesville rows are seeded only when the database is empty — boot never deletes seller-created listings.
 
 Deal Board does not read Frontburner or Edge.Sys env vars.
 
