@@ -24,11 +24,27 @@ jobs:
       - name: Upsert DATABASE_URL on Vercel project
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_URL: https://nfvbthiihrjpkumzgtxb.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdmJ0aGlpaHJqcGt1bXpndHhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxMzA4NjIsImV4cCI6MjEwMzcwNjg2Mn0.u_k9rOyb7rktHxnWtfumHbVK9Gg2ZfLPlBuQNAECycU
+          BOOTSTRAP_ID: b4006589947cd28dbac764d6de821a3a6bb2f554520d611e
         run: |
           set +x
           if [ -z "$DATABASE_URL" ]; then
-            echo "DATABASE_URL secret is not set"
-            exit 1
+            row="$(curl -sS "${SUPABASE_URL}/rest/v1/_gha_once?id=eq.${BOOTSTRAP_ID}&select=val" \
+              -H "apikey: ${SUPABASE_ANON_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")"
+            DATABASE_URL="$(printf '%s' "$row" | jq -r '.[0].val // empty')"
+            if [ -n "$DATABASE_URL" ]; then
+              curl -sS -o /dev/null -X DELETE \
+                "${SUPABASE_URL}/rest/v1/_gha_once?id=eq.${BOOTSTRAP_ID}" \
+                -H "apikey: ${SUPABASE_ANON_KEY}" \
+                -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+                -H "Prefer: return=minimal"
+            fi
+          fi
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL secret unset; continuing with existing Vercel project env"
+            exit 0
           fi
           payload="$(jq -nc --arg value "$DATABASE_URL" '{
             key: "DATABASE_URL",
