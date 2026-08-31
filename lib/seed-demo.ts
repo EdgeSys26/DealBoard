@@ -7,23 +7,10 @@ import type { Badge, WorkLevel } from "./types";
 const DEMO_PASSWORD = "demo";
 
 export async function seedDemo(prisma: PrismaClient) {
-  await prisma.message.deleteMany();
-  await prisma.thread.deleteMany();
-  await prisma.workAgain.deleteMany();
-  await prisma.report.deleteMany();
-  await prisma.blast.deleteMany();
-  await prisma.strike.deleteMany();
-  await prisma.mute.deleteMany();
-  await prisma.favorite.deleteMany();
-  await prisma.titleSlot.deleteMany();
-  await prisma.titleFile.deleteMany();
-  await prisma.offer.deleteMany();
-  await prisma.hold.deleteMany();
-  await prisma.gradeCache.deleteMany();
-  await prisma.compSnapshot.deleteMany();
-  await prisma.listing.deleteMany();
-  await prisma.buyBox.deleteMany();
-  await prisma.user.deleteMany();
+  const already = await prisma.user.findUnique({ where: { id: "user_buyer" } });
+  if (already) {
+    return;
+  }
 
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
 

@@ -1,11 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import { ensureSqliteFile, sqliteUrl } from "../lib/db-path";
 import { seedDemo } from "../lib/seed-demo";
 
-ensureSqliteFile();
-const prisma = new PrismaClient({
-  datasources: { db: { url: sqliteUrl() } },
-});
+const prisma = new PrismaClient();
 
 seedDemo(prisma)
   .then(() => prisma.$disconnect())

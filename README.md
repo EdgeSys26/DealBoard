@@ -39,7 +39,7 @@ After the buyer offers and the seller accepts 1847, the title card is First Titl
 
 ## Stack
 
-Next.js App Router, TypeScript, Tailwind, PWA (manifest + service worker), Prisma + SQLite.
+Next.js App Router, TypeScript, Tailwind, PWA (manifest + service worker), Prisma + Postgres.
 
 Required tables: `User`, `BuyBox`, `Listing`, `CompSnapshot`, `GradeCache`, `Hold`, `Offer`, `TitleFile`, `TitleSlot`, `Favorite`, `Mute`, `Strike`, `Blast`, `Report`. Messaging uses `Thread` / `Message`. After-close “work with again?” uses `WorkAgain`.
 
