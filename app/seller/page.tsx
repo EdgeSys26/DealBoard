@@ -2,30 +2,29 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getSellerDashboard } from "@/lib/queries";
-import { sendBlastAction, setListingStatusAction, tightenFloorAction } from "@/lib/actions";
+import {
+  sendBlastAction,
+  setListingDepositAction,
+  setListingStatusAction,
+  tightenFloorAction,
+} from "@/lib/actions";
 import { acceptOfferAction } from "@/lib/deal-actions";
-import { TopBar } from "@/components/TopBar";
 import { SellerNav } from "@/components/Nav";
-import { DashTabs } from "@/components/DashTabs";
 import { ClickRow } from "@/components/ClickRow";
+import { listingTitleDeposit } from "@/lib/deposit";
 import { usd } from "@/lib/money";
 import { formatSlot } from "@/lib/dates";
 import { STATUS_LABEL } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const SELLER_TABS = [
-  { id: "listings", href: "/seller?tab=listings", label: "Listings" },
-  { id: "offers", href: "/seller?tab=offers", label: "Offers" },
-  { id: "title", href: "/seller?tab=title", label: "Title" },
-  { id: "billing", href: "/seller?tab=billing", label: "Billing" },
-] as const;
-
-type SellerTab = (typeof SELLER_TABS)[number]["id"];
-
-function sellerTab(raw: string | undefined): SellerTab {
+function sellerTab(raw: string | undefined) {
   if (raw === "offers" || raw === "title" || raw === "billing") return raw;
   return "listings";
+}
+
+function closeDay(date: Date) {
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default async function SellerHome({
@@ -37,7 +36,7 @@ export default async function SellerHome({
   if (!user) redirect("/");
   if (user.role === "BUYER") redirect("/home");
   const tab = sellerTab((await searchParams).tab);
-  const { listings, meter, blasts } = await getSellerDashboard(
+  const { listings, meter, blasts, platformDeposit } = await getSellerDashboard(
     user.role === "ADMIN" ? "user_seller" : user.id,
   );
   const incoming = listings.flatMap((listing) =>
@@ -51,19 +50,17 @@ export default async function SellerHome({
 
   return (
     <div className="min-h-svh flex flex-col dash-page">
-      <TopBar user={user} title="Seller board" />
-      <DashTabs items={[...SELLER_TABS]} active={tab} />
-      <main className="flex-1 px-4 pb-6 space-y-3 pt-3">
+      <main className="flex-1 px-4 pb-6 space-y-2 pt-2">
         {tab === "listings" ? (
           <>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-semibold">Listings</p>
+              <p className="text-sm font-semibold tracking-tight">Listings</p>
               <div className="flex flex-wrap items-center gap-2">
-                <Link href="/seller/new" className="btn-secondary w-auto px-3 py-2 text-sm">
+                <Link href="/seller/new" className="btn-secondary w-auto px-3 py-1.5 text-sm">
                   New listing
                 </Link>
                 <details className="blast-menu relative">
-                  <summary className="btn-secondary w-auto px-3 py-2 text-sm cursor-pointer">
+                  <summary className="btn-secondary w-auto px-3 py-1.5 text-sm cursor-pointer">
                     Blast
                   </summary>
                   <div className="absolute right-0 z-10 mt-2 w-[min(100vw-2rem,360px)] card p-3 space-y-2">
@@ -77,7 +74,7 @@ export default async function SellerHome({
                       </select>
                       <textarea
                         name="message"
-                        rows={3}
+                        rows={2}
                         placeholder="A/B buyers in the box — 1847 just hit a 2-hour hold."
                       />
                       <button className="btn-primary" type="submit">
@@ -95,7 +92,7 @@ export default async function SellerHome({
             </div>
 
             {listings.length === 0 ? (
-              <div className="card p-5">
+              <div className="card p-4">
                 <p className="font-semibold">No listings yet</p>
                 <p className="text-sm text-muted mt-1">Publish one to show it on the board.</p>
               </div>
@@ -108,71 +105,93 @@ export default async function SellerHome({
                       <th>Price</th>
                       <th>Status</th>
                       <th>Offer floor</th>
+                      <th>Title deposit</th>
                       <th>Activity</th>
                       <th>Verified</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {listings.map((listing) => (
-                      <ClickRow key={listing.id} href={`/listings/${listing.id}`}>
-                        <td>
-                          <Link href={`/listings/${listing.id}`} className="font-semibold">
-                            {listing.address}
-                          </Link>
-                        </td>
-                        <td className="whitespace-nowrap">{usd(listing.assignmentPrice)}</td>
-                        <td>
-                          <div className="flex flex-wrap gap-1">
-                            {(["ACTIVE", "ON_HOLD", "UNDER_CONTRACT"] as const).map((status) => (
-                              <form
-                                key={status}
-                                action={setListingStatusAction.bind(null, listing.id, status)}
-                              >
-                                <button
-                                  className="chip justify-center px-2 py-1 text-[11px]"
-                                  data-on={listing.status === status ? "true" : "false"}
-                                  type="submit"
+                    {listings.map((listing) => {
+                      const deposit = listingTitleDeposit(listing, platformDeposit);
+                      return (
+                        <ClickRow key={listing.id} href={`/listings/${listing.id}`}>
+                          <td>
+                            <Link href={`/listings/${listing.id}`} className="font-semibold">
+                              {listing.address}
+                            </Link>
+                          </td>
+                          <td className="whitespace-nowrap">{usd(listing.assignmentPrice)}</td>
+                          <td>
+                            <div className="flex flex-wrap gap-1">
+                              {(["ACTIVE", "ON_HOLD", "UNDER_CONTRACT"] as const).map((status) => (
+                                <form
+                                  key={status}
+                                  action={setListingStatusAction.bind(null, listing.id, status)}
                                 >
-                                  {STATUS_LABEL[status]}
+                                  <button
+                                    className="chip justify-center"
+                                    data-on={listing.status === status ? "true" : "false"}
+                                    type="submit"
+                                  >
+                                    {STATUS_LABEL[status]}
+                                  </button>
+                                </form>
+                              ))}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="flex items-center gap-2">
+                              <span className="floor-copy text-sm">
+                                Offer floor: {listing.offerFloorPct}% under
+                              </span>
+                              <form
+                                action={tightenFloorAction.bind(null, listing.id)}
+                                className="flex items-center gap-1"
+                              >
+                                <input
+                                  name="offerFloorPct"
+                                  type="number"
+                                  min={0}
+                                  max={10}
+                                  step={1}
+                                  defaultValue={listing.offerFloorPct}
+                                  className="w-14 px-2 py-1 text-sm"
+                                  aria-label="Offer floor percent under"
+                                />
+                                <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
+                                  Set
                                 </button>
                               </form>
-                            ))}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="flex items-center gap-2">
-                            <span className="floor-copy text-sm">
-                              Offer floor: {listing.offerFloorPct}% under
-                            </span>
+                            </div>
+                          </td>
+                          <td>
                             <form
-                              action={tightenFloorAction.bind(null, listing.id)}
+                              action={setListingDepositAction.bind(null, listing.id)}
                               className="flex items-center gap-1"
                             >
                               <input
-                                name="offerFloorPct"
+                                name="titleDeposit"
                                 type="number"
-                                min={0}
-                                max={10}
-                                step={1}
-                                defaultValue={listing.offerFloorPct}
-                                className="w-14 px-2 py-1 text-sm"
-                                aria-label="Offer floor percent under"
+                                min={platformDeposit}
+                                step={100}
+                                defaultValue={deposit}
+                                className="w-24 px-2 py-1 text-sm"
+                                aria-label="Title deposit"
                               />
                               <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
                                 Set
                               </button>
                             </form>
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap text-sm text-muted">
-                          {listing.views} views · {listing.holds.length} holds · {listing.offers.length}{" "}
-                          offers
-                        </td>
-                        <td className="whitespace-nowrap">
-                          {listing.verified ? "Verified" : "Unverified"}
-                        </td>
-                      </ClickRow>
-                    ))}
+                          </td>
+                          <td className="whitespace-nowrap text-sm text-muted">
+                            {listing.views}/{listing.holds.length}/{listing.offers.length}
+                          </td>
+                          <td className="whitespace-nowrap text-sm">
+                            {listing.verified ? "Verified" : "Unverified"}
+                          </td>
+                        </ClickRow>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -181,100 +200,141 @@ export default async function SellerHome({
         ) : null}
 
         {tab === "offers" ? (
-          <>
-            {incoming.length === 0 ? (
-              <div className="card p-5">
-                <p className="font-semibold">No incoming bids</p>
-                <p className="text-sm text-muted mt-1">Offers land here when a buyer bids.</p>
-              </div>
-            ) : (
-              incoming.map(({ listing, offer }) => (
-                <article key={offer.id} className="card p-4 flex items-center justify-between gap-3">
-                  <div>
-                    <Link href={`/listings/${listing.id}`} className="font-semibold">
-                      {listing.address}
-                    </Link>
-                    <p className="text-sm text-muted">
-                      {usd(offer.price)} · {offer.status.toLowerCase()}
-                      {offer.pofAttached ? " · POF" : ""}
-                    </p>
-                  </div>
-                  {offer.status === "PENDING" ? (
-                    <form action={acceptOfferAction.bind(null, offer.id)}>
-                      <button className="text-accent font-semibold" type="submit">
-                        Accept
-                      </button>
-                    </form>
-                  ) : null}
-                </article>
-              ))
-            )}
-          </>
+          incoming.length === 0 ? (
+            <div className="card p-4">
+              <p className="font-semibold">No incoming bids</p>
+              <p className="text-sm text-muted mt-1">Offers land here when a buyer bids.</p>
+            </div>
+          ) : (
+            <div className="card overflow-x-auto">
+              <table className="board-table">
+                <thead>
+                  <tr>
+                    <th>Address</th>
+                    <th>Price</th>
+                    <th>Close</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {incoming.map(({ listing, offer }) => (
+                    <tr key={offer.id}>
+                      <td>
+                        <Link href={`/listings/${listing.id}`} className="font-semibold">
+                          {listing.address}
+                        </Link>
+                      </td>
+                      <td className="whitespace-nowrap">{usd(offer.price)}</td>
+                      <td className="whitespace-nowrap">{closeDay(offer.closeDate)}</td>
+                      <td className="whitespace-nowrap text-sm text-muted">
+                        {offer.status.toLowerCase()}
+                        {offer.pofAttached ? " · POF" : ""}
+                      </td>
+                      <td>
+                        {offer.status === "PENDING" ? (
+                          <form action={acceptOfferAction.bind(null, offer.id)}>
+                            <button className="text-accent font-semibold text-sm" type="submit">
+                              Accept
+                            </button>
+                          </form>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : null}
 
         {tab === "title" ? (
-          <>
-            {appointments.length === 0 ? (
-              <div className="card p-5">
-                <p className="font-semibold">No title appointments</p>
-                <p className="text-sm text-muted mt-1">Slots show here after a file is opened.</p>
-              </div>
-            ) : (
-              appointments.map(({ listing, slot }) => (
-                <article key={slot.id} className="card p-4">
-                  <Link href={`/listings/${listing.id}`} className="font-semibold">
-                    {listing.address}
-                  </Link>
-                  <p className="text-sm text-muted mt-1">
-                    {formatSlot(slot.startsAt)} · {slot.location}
-                    {slot.selected ? " · selected" : ""}
-                    {slot.kind ? ` · ${slot.kind}` : ""}
-                  </p>
-                </article>
-              ))
-            )}
-          </>
+          appointments.length === 0 ? (
+            <div className="card p-4">
+              <p className="font-semibold">No title appointments</p>
+              <p className="text-sm text-muted mt-1">Slots show here after a file is opened.</p>
+            </div>
+          ) : (
+            <div className="card overflow-x-auto">
+              <table className="board-table">
+                <thead>
+                  <tr>
+                    <th>Address</th>
+                    <th>When</th>
+                    <th>Where</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appointments.map(({ listing, slot }) => (
+                    <tr key={slot.id}>
+                      <td>
+                        <Link href={`/listings/${listing.id}`} className="font-semibold">
+                          {listing.address}
+                        </Link>
+                      </td>
+                      <td className="whitespace-nowrap">{formatSlot(slot.startsAt)}</td>
+                      <td>{slot.location}</td>
+                      <td className="whitespace-nowrap text-sm text-muted">
+                        {slot.selected ? "Selected" : slot.kind}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : null}
 
         {tab === "billing" ? (
           <>
             <section className="card p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-muted">Slot meter</p>
-              <p className="text-2xl font-semibold mt-1">{usd(meter.monthly)} / mo</p>
+              <p className="text-2xl font-semibold tracking-tight mt-1">{usd(meter.monthly)} / mo</p>
               <p className="text-sm text-muted">
                 {meter.activeCount} Active · {meter.included} included · {meter.extra} extra at{" "}
                 {usd(meter.extraEach)}
               </p>
-              <p className="text-sm mt-2">
-                ~{usd(meter.base)}/mo includes 1 Active listing. ~{usd(meter.extraEach)} per extra
-                Active listing / month.
-              </p>
               <p className="text-xs text-muted mt-2">
-                On hold, Pending / under contract, Assigned, and Expired are not billed. Only Active —
-                what buyers can still take.
+                ~{usd(meter.base)}/mo includes 1 Active. Extra Active listings are {usd(meter.extraEach)}.
+                On hold and pending are free.
               </p>
             </section>
-            <section className="card p-4 space-y-2">
-              <p className="font-semibold">Active — billed</p>
-              {active.length === 0 ? <p className="text-sm text-muted">None</p> : null}
-              {active.map((l) => (
-                <p key={l.id} className="text-sm">
-                  {l.address}
-                </p>
-              ))}
-            </section>
-            <section className="card p-4 space-y-2">
-              <p className="font-semibold">On hold / pending — free</p>
-              {free.length === 0 ? <p className="text-sm text-muted">None</p> : null}
-              {free.map((l) => (
-                <p key={l.id} className="text-sm">
-                  {l.address} · {l.status === "ON_HOLD" ? "On hold" : "Pending"}
-                </p>
-              ))}
-            </section>
-            <p className="text-xs text-muted">
-              Buyers stay free forever. No iOS in-app purchases. Stripe stays stubbed.
-            </p>
+            <div className="card overflow-x-auto">
+              <table className="board-table">
+                <thead>
+                  <tr>
+                    <th>Listing</th>
+                    <th>Status</th>
+                    <th>Bill</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {active.map((l) => (
+                    <tr key={l.id}>
+                      <td>{l.address}</td>
+                      <td>Active</td>
+                      <td>Billed</td>
+                    </tr>
+                  ))}
+                  {free.map((l) => (
+                    <tr key={l.id}>
+                      <td>{l.address}</td>
+                      <td>{l.status === "ON_HOLD" ? "On hold" : "Pending"}</td>
+                      <td>Free</td>
+                    </tr>
+                  ))}
+                  {active.length === 0 && free.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="text-sm text-muted">
+                        No listings on the meter.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-muted">Buyers stay free. Stripe stays stubbed.</p>
           </>
         ) : null}
       </main>
