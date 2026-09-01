@@ -36,16 +36,31 @@ const ROLES: { role: Role; label: string }[] = [
   { role: "ADMIN", label: "Admin" },
 ];
 
-export function ChromeBar({ current }: { current: Role }) {
+export function ChromeBar({
+  current,
+  sellerBadges = { newOfferCount: 0, expiring: false },
+}: {
+  current: Role;
+  sellerBadges?: { newOfferCount: number; expiring: boolean };
+}) {
   const path = usePathname();
   const params = useSearchParams();
   const tab = params.get("tab") ?? "";
   const seller = path === "/seller" || path.startsWith("/seller/");
   const buyer = path === "/home";
   const admin = path === "/admin";
+  const sellerTabs = SELLER_TABS.map((item) => {
+    if (item.id === "offers" && sellerBadges.newOfferCount > 0 && tab !== "offers") {
+      return { ...item, dot: "green" as const, note: `${sellerBadges.newOfferCount} new` };
+    }
+    if (item.id === "listings" && sellerBadges.expiring) {
+      return { ...item, dot: "red" as const };
+    }
+    return item;
+  });
   const tabs =
     path === "/seller" || path === "/seller/billing"
-      ? SELLER_TABS
+      ? sellerTabs
       : buyer
         ? BUYER_TABS
         : admin

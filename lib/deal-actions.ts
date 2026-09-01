@@ -15,6 +15,14 @@ function touchOfferPaths(listingId: string) {
   revalidatePath("/deals");
 }
 
+export async function markSellerOffersSeenAction() {
+  const user = await requireUser();
+  if (user.role !== "SELLER" && user.role !== "ADMIN") return;
+  const { markSellerOffersSeen } = await import("./queries");
+  await markSellerOffersSeen(user.role === "ADMIN" ? "user_seller" : user.id);
+  revalidatePath("/seller");
+}
+
 async function paperAcceptedOffer(offerId: string, listingId: string) {
   await prisma.offer.update({
     where: { id: offerId },
@@ -165,6 +173,8 @@ export async function declineCounterAction(offerId: string) {
 
 export async function hideListingAction(listingId: string) {
   const user = await requireUser();
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing) return;
   const existing = await prisma.favorite.findUnique({
     where: { userId_listingId: { userId: user.id, listingId } },
   });
