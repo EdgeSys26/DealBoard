@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getSellerDashboard } from "@/lib/queries";
-import { acceptOfferAction, sendBlastAction, setListingStatusAction } from "@/lib/actions";
+import { acceptOfferAction, sendBlastAction, setListingStatusAction, tightenFloorAction } from "@/lib/actions";
 import { TopBar } from "@/components/TopBar";
 import { SellerNav } from "@/components/Nav";
 import { usd } from "@/lib/money";
@@ -60,6 +60,28 @@ export default async function SellerHome() {
             </div>
             <p className="text-xs text-muted">
               {listing.views} views · {listing.holds.length} holds · {listing.offers.length} offers
+            </p>
+            {listing.titleSlots.some((s) => s.selected) ? (
+              <p className="text-xs text-muted">Next title appt set</p>
+            ) : null}
+            <form action={tightenFloorAction.bind(null, listing.id)} className="flex items-end gap-2">
+              <label className="field flex-1">
+                Offer floor % under asking
+                <input
+                  name="offerFloorPct"
+                  type="number"
+                  min={0}
+                  max={10}
+                  step={1}
+                  defaultValue={listing.offerFloorPct}
+                />
+              </label>
+              <button className="btn-secondary w-auto px-3" type="submit">
+                Set
+              </button>
+            </form>
+            <p className="text-[11px] text-muted">
+              Default 10%. You may tighten (5%), not loosen. Buyer cannot bid under this floor.
             </p>
             {listing.offers.map((offer) => (
               <div key={offer.id} className="flex items-center justify-between gap-2 text-sm">
