@@ -2,13 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { displayGradeLabel, getListingDetail, letterTone } from "@/lib/queries";
-import {
-  favoriteAction,
-  holdListingAction,
-  placeOfferAction,
-  pickTitleSlotAction,
-  sendMessageAction,
-} from "@/lib/actions";
+import { holdListingAction, pickTitleSlotAction } from "@/lib/actions";
+import { favoriteAction, placeOfferAction, sendMessageAction } from "@/lib/deal-actions";
 import { BuyerNav, SellerNav } from "@/components/Nav";
 import { GradeBars } from "@/components/GradeBars";
 import { CompMap } from "@/components/CompMap";
@@ -33,9 +28,9 @@ export default async function ListingPage({
   if (data.hidden) {
     return (
       <div className="min-h-svh px-4 pt-6">
-        <p className="font-semibold">This listing is on hold</p>
+        <p className="font-semibold">This listing is not available</p>
         <p className="text-sm text-muted mt-2">
-          On-hold contracts are hidden from buyers — no feed, search, or messages.
+          On hold and pending contracts are hidden from other buyers — no feed, no push, no bid.
         </p>
         <Link href="/home" className="btn-secondary mt-4 inline-block text-center">
           Back home
@@ -154,7 +149,7 @@ export default async function ListingPage({
               {otherHold && !myHold ? (
                 <p className="text-sm font-semibold">Another buyer has the 2-hour hold.</p>
               ) : null}
-              {!myHold && !otherHold && listing.status === "ACTIVE" ? (
+              {listing.status === "ACTIVE" && !myHold && !otherHold ? (
                 <form action={holdListingAction.bind(null, listing.id)}>
                   <button className="btn-secondary" type="submit">
                     Soft hold for 2 hours
@@ -162,10 +157,12 @@ export default async function ListingPage({
                 </form>
               ) : null}
 
+              {listing.status === "ACTIVE" ? (
+              <>
               <p className="font-semibold">Place offer</p>
               <p className="text-xs text-muted">
                 Floor {usd(floor)} ({listing.offerFloorPct}% below asking). No ceiling.
-                Hold drops unless this offer includes POF.
+                Hold drops unless this offer includes POF. Buyer cannot submit under the seller&apos;s floor.
               </p>
               <form action={placeOfferAction} className="space-y-3">
                 <input type="hidden" name="listingId" value={listing.id} />
@@ -199,6 +196,12 @@ export default async function ListingPage({
                   Your offer {usd(myOffer.price)} is {myOffer.status.toLowerCase()}.
                 </p>
               ) : null}
+              </>
+              ) : myOffer ? (
+                <p className="text-sm">
+                  Your offer {usd(myOffer.price)} is {myOffer.status.toLowerCase()}.
+                </p>
+              ) : null}
             </section>
 
             <TitleCard listingId={listing.id} titleFile={listing.titleFile} showWire={showWire} accepted={Boolean(accepted)} />
@@ -218,12 +221,12 @@ export default async function ListingPage({
             <div className="grid grid-cols-2 gap-2">
               <form action={favoriteAction.bind(null, listing.id, "FAVORITE")}>
                 <button className="btn-secondary" type="submit">
-                  Favorite
+                  Favorite seller
                 </button>
               </form>
               <form action={favoriteAction.bind(null, listing.id, "DONT_SHOW")}>
                 <button className="btn-secondary" type="submit">
-                  Don&apos;t show
+                  Don&apos;t show this seller
                 </button>
               </form>
             </div>
@@ -272,7 +275,7 @@ function TitleCard({
       <p className="text-sm">
         {titleFile.company} · file #{titleFile.fileNumber}
       </p>
-      <p className="text-sm">Deposit {usd(titleFile.depositAmount)} to title — never the platform or seller bank.</p>
+      <p className="text-sm">Deposit {usd(titleFile.depositAmount)} to title within 24h — never the platform or seller bank.</p>
       <p className="text-sm">{titleFile.officeAddress}</p>
       {titleFile.slots.map((slot) => (
         <form key={slot.id} action={pickTitleSlotAction.bind(null, slot.id)} className="flex items-center justify-between gap-2 text-sm">
