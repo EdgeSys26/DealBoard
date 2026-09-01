@@ -41,7 +41,8 @@ export default async function NewListingPage() {
               <option value="FULL_GUT">Full gut</option>
             </select>
           </label>
-          <label className="field">Offer floor % under asking
+          <label className="field">
+            <span className="floor-copy">Offer floor: 10% under</span>
             <input name="offerFloorPct" type="number" min={0} max={10} defaultValue={10} />
           </label>
           <p className="text-[11px] text-muted -mt-1">
