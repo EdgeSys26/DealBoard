@@ -19,6 +19,7 @@ const BUYER_TABS = [
   { id: "offers", href: "/home?tab=offers", label: "Offers" },
   { id: "title", href: "/home?tab=title", label: "Title" },
   { id: "saved", href: "/home?tab=saved", label: "Saved" },
+  { id: "hidden", href: "/home?tab=hidden", label: "Hidden" },
 ];
 
 const ADMIN_TABS = [
@@ -58,7 +59,7 @@ export function ChromeBar({ current }: { current: Role }) {
       ? tab === "offers" || tab === "title" || tab === "billing"
         ? tab
         : "listings"
-      : tab === "held" || tab === "offers" || tab === "title" || tab === "saved"
+      : tab === "held" || tab === "offers" || tab === "title" || tab === "saved" || tab === "hidden"
         ? tab
         : "matches";
 

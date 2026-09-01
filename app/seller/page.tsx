@@ -8,11 +8,13 @@ import {
   setListingStatusAction,
   tightenFloorAction,
 } from "@/lib/actions";
-import { acceptOfferAction } from "@/lib/deal-actions";
+import { acceptOfferAction, counterOfferAction } from "@/lib/deal-actions";
 import { SellerNav } from "@/components/Nav";
 import { ClickRow } from "@/components/ClickRow";
 import { listingTitleDeposit } from "@/lib/deposit";
 import { bidVsAsking } from "@/lib/bid-tone";
+import { isoDay, offerCardStatus } from "@/lib/offer-status";
+import { minOfferPrice } from "@/lib/offer-floor";
 import { usd } from "@/lib/money";
 import { formatSlot } from "@/lib/dates";
 import { STATUS_LABEL } from "@/lib/types";
@@ -249,15 +251,46 @@ export default async function SellerHome({
                         <td className="whitespace-nowrap text-sm text-muted">
                           {offer.pofAttached ? "POF" : "No POF"}
                           {" · "}
-                          {offer.status.toLowerCase()}
+                          {offerCardStatus(offer)}
                         </td>
                         <td>
                           {offer.status === "PENDING" ? (
-                            <form action={acceptOfferAction.bind(null, offer.id)}>
-                              <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
-                                Accept
-                              </button>
-                            </form>
+                            <div className="flex flex-col gap-2 min-w-[220px]">
+                              <form action={acceptOfferAction.bind(null, offer.id)}>
+                                <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
+                                  Accept
+                                </button>
+                              </form>
+                              <form action={counterOfferAction} className="space-y-1">
+                                <input type="hidden" name="offerId" value={offer.id} />
+                                <div className="offer-row">
+                                  <label className="field">
+                                    Price
+                                    <input
+                                      name="price"
+                                      type="number"
+                                      min={minOfferPrice(listing.assignmentPrice, listing.offerFloorPct)}
+                                      defaultValue={listing.assignmentPrice}
+                                      className="px-2 py-1 text-sm"
+                                      required
+                                    />
+                                  </label>
+                                  <label className="field">
+                                    Close date
+                                    <input
+                                      name="closeDate"
+                                      type="date"
+                                      defaultValue={isoDay(offer.closeDate)}
+                                      className="px-2 py-1 text-sm"
+                                      required
+                                    />
+                                  </label>
+                                </div>
+                                <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
+                                  Counter
+                                </button>
+                              </form>
+                            </div>
                           ) : (
                             <span className="text-sm text-muted">—</span>
                           )}

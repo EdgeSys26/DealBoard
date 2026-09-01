@@ -3,9 +3,16 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { displayGradeLabel, getBuyerBoard, letterTone } from "@/lib/queries";
 import { toggleLookingAction } from "@/lib/actions";
+import {
+  acceptCounterAction,
+  declineCounterAction,
+  hideListingAction,
+  unhideListingAction,
+} from "@/lib/deal-actions";
 import { BuyerNav } from "@/components/Nav";
 import { listingPhotos } from "@/lib/listing-photos";
 import { compactUsd, usd } from "@/lib/money";
+import { offerCardStatus } from "@/lib/offer-status";
 import { BADGE_LABEL, WORK_LEVEL_LABEL, type Letter, type WorkLevel } from "@/lib/types";
 import { daysBetween } from "@/lib/geo";
 import { formatSlot } from "@/lib/dates";
@@ -13,7 +20,9 @@ import { formatSlot } from "@/lib/dates";
 export const dynamic = "force-dynamic";
 
 function buyerTab(raw: string | undefined) {
-  if (raw === "held" || raw === "offers" || raw === "title" || raw === "saved") return raw;
+  if (raw === "held" || raw === "offers" || raw === "title" || raw === "saved" || raw === "hidden") {
+    return raw;
+  }
   return "matches";
 }
 
@@ -32,7 +41,7 @@ export default async function HomePage({
   if (user.role === "ADMIN") redirect("/admin");
 
   const tab = buyerTab((await searchParams).tab);
-  const { box, cards, looking, holds, offers, saved } = await getBuyerBoard(user);
+  const { box, cards, looking, holds, offers, saved, hidden } = await getBuyerBoard(user);
   const titleRows = offers.filter((o) => o.status === "ACCEPTED");
 
   return (
@@ -72,40 +81,50 @@ export default async function HomePage({
             ) : null}
 
             <div className="match-grid">
-              {cards.map(({ listing, grade }) => {
+              {cards.map(({ listing, grade, offer }) => {
                 const photos = listingPhotos(listing);
                 const days = Math.max(0, daysBetween(new Date(), listing.contractExpiresAt));
                 const letter = (grade?.letter ?? "?") as Letter;
                 return (
-                  <Link key={listing.id} href={`/listings/${listing.id}`} className="card overflow-hidden block">
-                    <div className="relative h-40 bg-canvas">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photos[0]} alt="" className="h-full w-full object-cover" />
-                      <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
-                      {listing.verified ? (
-                        <span className="absolute top-2 right-2 text-[11px] font-bold bg-white/90 px-2 py-1 rounded-full">
-                          Verified
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="px-3 py-3">
-                      <div className="flex justify-between gap-2">
-                        <p className="font-semibold tracking-tight leading-tight">{listing.address}</p>
-                        <p className="font-semibold text-accent">{compactUsd(listing.assignmentPrice)}</p>
+                  <article key={listing.id} className="card overflow-hidden">
+                    <Link href={`/listings/${listing.id}`} className="block">
+                      <div className="relative h-40 bg-canvas">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={photos[0]} alt="" className="h-full w-full object-cover" />
+                        <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
+                        {listing.verified ? (
+                          <span className="absolute top-2 right-2 text-[11px] font-bold bg-white/90 px-2 py-1 rounded-full">
+                            Verified
+                          </span>
+                        ) : null}
                       </div>
-                      <p className="text-xs text-muted mt-1">
-                        {listing.city} {listing.zip} · {listing.beds}/{listing.baths} · {listing.sf} sf ·{" "}
-                        {WORK_LEVEL_LABEL[listing.workLevel as WorkLevel]} ·{" "}
-                        {BADGE_LABEL[listing.seller.badge as "GREEN" | "SILVER" | "GOLD"]}
-                      </p>
-                      <p className="text-xs text-muted mt-1">
-                        AVM {listing.platformAvm ? usd(listing.platformAvm) : "none"} · {days} days
-                      </p>
-                      {listing.id === "listing_pleasant" ? (
-                        <p className="text-xs font-semibold text-accent mt-1">2-hour hold on this card</p>
-                      ) : null}
-                    </div>
-                  </Link>
+                      <div className="px-3 pt-3">
+                        <div className="flex justify-between gap-2">
+                          <p className="font-semibold tracking-tight leading-tight">{listing.address}</p>
+                          <p className="font-semibold text-accent">{compactUsd(listing.assignmentPrice)}</p>
+                        </div>
+                        <p className="text-xs text-muted mt-1">
+                          {listing.city} {listing.zip} · {listing.beds}/{listing.baths} · {listing.sf} sf ·{" "}
+                          {WORK_LEVEL_LABEL[listing.workLevel as WorkLevel]} ·{" "}
+                          {BADGE_LABEL[listing.seller.badge as "GREEN" | "SILVER" | "GOLD"]}
+                        </p>
+                        <p className="text-xs text-muted mt-1">
+                          AVM {listing.platformAvm ? usd(listing.platformAvm) : "none"} · {days} days
+                        </p>
+                        {offer ? (
+                          <p className="text-xs font-semibold mt-1">{offerCardStatus(offer)}</p>
+                        ) : null}
+                        {listing.id === "listing_pleasant" && !offer ? (
+                          <p className="text-xs font-semibold text-accent mt-1">2-hour hold on this card</p>
+                        ) : null}
+                      </div>
+                    </Link>
+                    <form action={hideListingAction.bind(null, listing.id)} className="px-3 pb-3 pt-2">
+                      <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
+                        Hide
+                      </button>
+                    </form>
+                  </article>
                 );
               })}
             </div>
@@ -171,6 +190,7 @@ export default async function HomePage({
                     <th>Close</th>
                     <th>Deposit</th>
                     <th>Status</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -181,10 +201,30 @@ export default async function HomePage({
                           {offer.listing.address}
                         </Link>
                       </td>
-                      <td className="whitespace-nowrap">{usd(offer.price)}</td>
-                      <td className="whitespace-nowrap">{closeDay(offer.closeDate)}</td>
+                      <td className="whitespace-nowrap">{usd(offer.counterPrice ?? offer.price)}</td>
+                      <td className="whitespace-nowrap">
+                        {closeDay(offer.counterCloseDate ?? offer.closeDate)}
+                      </td>
                       <td className="whitespace-nowrap text-sm">{usd(offer.deposit)}</td>
-                      <td className="whitespace-nowrap text-sm text-muted">{offer.status.toLowerCase()}</td>
+                      <td className="whitespace-nowrap text-sm font-semibold">{offerCardStatus(offer)}</td>
+                      <td>
+                        {offer.status === "COUNTERED" ? (
+                          <div className="flex flex-wrap gap-1">
+                            <form action={acceptCounterAction.bind(null, offer.id)}>
+                              <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
+                                Accept
+                              </button>
+                            </form>
+                            <form action={declineCounterAction.bind(null, offer.id)}>
+                              <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
+                                Decline
+                              </button>
+                            </form>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted">—</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -262,8 +302,44 @@ export default async function HomePage({
                           {row.listing.address}
                         </Link>
                       </td>
-                      <td className="text-sm text-muted">
-                        {row.kind === "FAVORITE" ? "Favorite seller" : "Don't show"}
+                      <td className="text-sm text-muted">Favorite seller</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : null}
+
+        {tab === "hidden" ? (
+          hidden.length === 0 ? (
+            <div className="card p-4">
+              <p className="font-semibold">Nothing hidden</p>
+              <p className="text-sm text-muted mt-1">Hide a match to park it here. It leaves Matches and stops alerts.</p>
+            </div>
+          ) : (
+            <div className="card overflow-x-auto">
+              <table className="board-table">
+                <thead>
+                  <tr>
+                    <th>Address</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hidden.map((row) => (
+                    <tr key={row.id}>
+                      <td>
+                        <Link href={`/listings/${row.listingId}`} className="font-semibold">
+                          {row.listing.address}
+                        </Link>
+                      </td>
+                      <td>
+                        <form action={unhideListingAction.bind(null, row.listingId)}>
+                          <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
+                            Unhide
+                          </button>
+                        </form>
                       </td>
                     </tr>
                   ))}
