@@ -12,6 +12,7 @@ import { acceptOfferAction } from "@/lib/deal-actions";
 import { SellerNav } from "@/components/Nav";
 import { ClickRow } from "@/components/ClickRow";
 import { listingTitleDeposit } from "@/lib/deposit";
+import { bidVsAsking } from "@/lib/bid-tone";
 import { usd } from "@/lib/money";
 import { formatSlot } from "@/lib/dates";
 import { STATUS_LABEL } from "@/lib/types";
@@ -36,7 +37,7 @@ export default async function SellerHome({
   if (!user) redirect("/");
   if (user.role === "BUYER") redirect("/home");
   const tab = sellerTab((await searchParams).tab);
-  const { listings, meter, blasts, platformDeposit } = await getSellerDashboard(
+  const { listings, meter, blasts, platformDeposit, levers } = await getSellerDashboard(
     user.role === "ADMIN" ? "user_seller" : user.id,
   );
   const incoming = listings.flatMap((listing) =>
@@ -152,7 +153,7 @@ export default async function SellerHome({
                                   name="offerFloorPct"
                                   type="number"
                                   min={0}
-                                  max={10}
+                                  max={levers.defaultOfferFloorPct}
                                   step={1}
                                   defaultValue={listing.offerFloorPct}
                                   className="w-14 px-2 py-1 text-sm"
@@ -211,37 +212,59 @@ export default async function SellerHome({
                 <thead>
                   <tr>
                     <th>Address</th>
-                    <th>Price</th>
+                    <th>Asking</th>
+                    <th>Bid</th>
+                    <th>%</th>
+                    <th>Vs asking</th>
                     <th>Close</th>
-                    <th>Status</th>
+                    <th>Buyer</th>
+                    <th>POF / status</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {incoming.map(({ listing, offer }) => (
-                    <tr key={offer.id}>
-                      <td>
-                        <Link href={`/listings/${listing.id}`} className="font-semibold">
-                          {listing.address}
-                        </Link>
-                      </td>
-                      <td className="whitespace-nowrap">{usd(offer.price)}</td>
-                      <td className="whitespace-nowrap">{closeDay(offer.closeDate)}</td>
-                      <td className="whitespace-nowrap text-sm text-muted">
-                        {offer.status.toLowerCase()}
-                        {offer.pofAttached ? " · POF" : ""}
-                      </td>
-                      <td>
-                        {offer.status === "PENDING" ? (
-                          <form action={acceptOfferAction.bind(null, offer.id)}>
-                            <button className="text-accent font-semibold text-sm" type="submit">
-                              Accept
-                            </button>
-                          </form>
-                        ) : null}
-                      </td>
-                    </tr>
-                  ))}
+                  {incoming.map(({ listing, offer }) => {
+                    const vs = bidVsAsking(offer.price, listing.assignmentPrice, listing.offerFloorPct);
+                    const vsCopy =
+                      vs.delta === 0
+                        ? `${usd(0)} even`
+                        : vs.delta > 0
+                          ? `${usd(vs.delta)} over`
+                          : `${usd(-vs.delta)} under`;
+                    return (
+                      <tr key={offer.id} className={`offer-bid-row tone-${vs.tone}`}>
+                        <td>
+                          <Link href={`/listings/${listing.id}`} className="font-semibold">
+                            {listing.address}
+                          </Link>
+                        </td>
+                        <td className="whitespace-nowrap">{usd(listing.assignmentPrice)}</td>
+                        <td className="whitespace-nowrap font-semibold">{usd(offer.price)}</td>
+                        <td className="whitespace-nowrap">
+                          <span className={`bid-pct ${vs.tone}`}>{vs.pct}%</span>
+                        </td>
+                        <td className="whitespace-nowrap">{vsCopy}</td>
+                        <td className="whitespace-nowrap">{closeDay(offer.closeDate)}</td>
+                        <td className="whitespace-nowrap">{offer.buyer.name}</td>
+                        <td className="whitespace-nowrap text-sm text-muted">
+                          {offer.pofAttached ? "POF" : "No POF"}
+                          {" · "}
+                          {offer.status.toLowerCase()}
+                        </td>
+                        <td>
+                          {offer.status === "PENDING" ? (
+                            <form action={acceptOfferAction.bind(null, offer.id)}>
+                              <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
+                                Accept
+                              </button>
+                            </form>
+                          ) : (
+                            <span className="text-sm text-muted">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
