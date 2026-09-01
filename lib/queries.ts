@@ -20,16 +20,16 @@ export async function getHomeFeed(user: SessionUser) {
   });
   const muted = await prisma.mute.findMany({ where: { userId: user.id } });
   const mutedIds = new Set(muted.map((m) => m.mutedUserId));
-  const hidden = await prisma.favorite.findMany({
-    where: { userId: user.id, kind: "DONT_SHOW" },
+  const favs = await prisma.favorite.findMany({
+    where: { userId: user.id, kind: "FAVORITE" },
+    include: { listing: { select: { sellerId: true } } },
   });
-  const hiddenIds = new Set(hidden.map((f) => f.listingId));
+  const favoriteSellerIds = new Set(favs.map((f) => f.listing.sellerId));
 
   const cards = [];
   for (const listing of listings) {
     if (listing.status !== "ACTIVE") continue;
     if (mutedIds.has(listing.sellerId)) continue;
-    if (hiddenIds.has(listing.id)) continue;
     let grade: GradeResult | null = null;
     if (box) {
       grade = await gradeAndCache(listing.id, box.id);
@@ -38,7 +38,12 @@ export async function getHomeFeed(user: SessionUser) {
     cards.push({ listing, grade });
   }
 
-  cards.sort((a, b) => (b.grade?.score ?? 0) - (a.grade?.score ?? 0));
+  cards.sort((a, b) => {
+    const aFav = favoriteSellerIds.has(a.listing.sellerId) ? 1 : 0;
+    const bFav = favoriteSellerIds.has(b.listing.sellerId) ? 1 : 0;
+    if (aFav !== bFav) return bFav - aFav;
+    return (b.grade?.score ?? 0) - (a.grade?.score ?? 0);
+  });
   return { box, cards, looking: user.lookingStatus === "LOOKING" };
 }
 
@@ -63,7 +68,14 @@ export async function getListingDetail(id: string, user: SessionUser) {
       data: { views: { increment: 1 } },
     });
   }
-  if (listing.status === "ON_HOLD" && user.role === "BUYER" && user.id !== listing.sellerId) {
+  const acceptedMine = listing.offers.find(
+    (o) => o.status === "ACCEPTED" && o.buyerId === user.id,
+  );
+  const hiddenFromBuyer =
+    user.role === "BUYER" &&
+    listing.status !== "ACTIVE" &&
+    !acceptedMine;
+  if (hiddenFromBuyer) {
     return { hidden: true as const, listing: null };
   }
 
@@ -73,11 +85,10 @@ export async function getListingDetail(id: string, user: SessionUser) {
   const myOffer = listing.offers.find((o) => o.buyerId === user.id);
   const accepted = listing.offers.find((o) => o.status === "ACCEPTED");
   const floor = minOfferPrice(listing.assignmentPrice, listing.offerFloorPct);
-  const rehabGuess = listing.rehabEstimate;
   const leftoverNow = leftover(
     listing.platformAvm,
     myOffer?.price ?? listing.assignmentPrice,
-    rehabGuess,
+    listing.rehabEstimate,
   );
 
   return {
