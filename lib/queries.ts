@@ -47,7 +47,12 @@ export async function getHomeFeed(user: SessionUser) {
       grade = await gradeAndCache(listing.id, box.id);
     }
     if (grade && !isHomeVisible(grade.letter)) continue;
-    cards.push({ listing, grade, offer: offerByListing.get(listing.id) ?? null });
+    cards.push({
+      listing,
+      grade,
+      offer: offerByListing.get(listing.id) ?? null,
+      saved: listing.favorites.some((f) => f.userId === user.id && f.kind === "FAVORITE"),
+    });
   }
 
   cards.sort((a, b) => {
@@ -73,7 +78,7 @@ export async function getBuyerBoard(user: SessionUser) {
   });
   const saved = await prisma.favorite.findMany({
     where: { userId: user.id, kind: "FAVORITE" },
-    include: { listing: true },
+    include: { listing: { include: { seller: true } } },
     orderBy: { listingId: "asc" },
   });
   const hidden = await prisma.favorite.findMany({
@@ -81,7 +86,18 @@ export async function getBuyerBoard(user: SessionUser) {
     include: { listing: true },
     orderBy: { listingId: "asc" },
   });
-  return { ...feed, holds, offers, saved, hidden };
+  const savedSellers: { sellerId: string; name: string; listingId: string }[] = [];
+  const seenSellers = new Set<string>();
+  for (const row of saved) {
+    if (seenSellers.has(row.listing.sellerId)) continue;
+    seenSellers.add(row.listing.sellerId);
+    savedSellers.push({
+      sellerId: row.listing.sellerId,
+      name: row.listing.seller.name,
+      listingId: row.listingId,
+    });
+  }
+  return { ...feed, holds, offers, saved, savedSellers, hidden };
 }
 
 export async function getListingDetail(id: string, user: SessionUser) {
@@ -141,6 +157,7 @@ export async function getListingDetail(id: string, user: SessionUser) {
     titleDeposit,
     photos: listingPhotos(listing),
     isHidden: listing.favorites.some((f) => f.kind === "HIDDEN"),
+    isSaved: listing.favorites.some((f) => f.kind === "FAVORITE"),
     showSellerPhone: Boolean(accepted && accepted.buyerId === user.id),
     showWire: Boolean(listing.titleFile?.wireReleased && accepted),
   };
