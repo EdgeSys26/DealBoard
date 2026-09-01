@@ -15,6 +15,7 @@ import {
 import { offerCardStatus } from "@/lib/offer-status";
 import { BuyerNav, SellerNav } from "@/components/Nav";
 import { GradeBars } from "@/components/GradeBars";
+import { SaveStar } from "@/components/SaveStar";
 import { CompMap } from "@/components/CompMap";
 import { HoldTimer } from "@/components/HoldTimer";
 import { usd } from "@/lib/money";
@@ -48,7 +49,7 @@ export default async function ListingPage({
     );
   }
 
-  const { listing, grade, myHold, myOffer, accepted, floor, leftoverNow, titleDeposit, photos, isHidden, showSellerPhone, showWire } = data;
+  const { listing, grade, myHold, myOffer, accepted, floor, leftoverNow, titleDeposit, photos, isHidden, isSaved, showSellerPhone, showWire } = data;
   const days = Math.max(0, daysBetween(new Date(), listing.contractExpiresAt));
   const letter = grade?.letter ?? "—";
   const otherHold = listing.holds.find((h) => h.buyerId !== user.id);
@@ -68,9 +69,12 @@ export default async function ListingPage({
             <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
           </div>
           <div className="p-4">
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-3">
               <h1 className="text-xl font-semibold leading-tight">{listing.address}</h1>
-              <p className="text-lg font-semibold text-accent">{usd(listing.assignmentPrice)}</p>
+              <p className="price-with-star">
+                <span className="text-lg font-semibold text-accent">{usd(listing.assignmentPrice)}</span>
+                {user.role === "BUYER" ? <SaveStar listingId={listing.id} saved={isSaved} /> : null}
+              </p>
             </div>
             <p className="text-sm text-muted">
               {listing.city}, {listing.state} {listing.zip}
@@ -88,31 +92,45 @@ export default async function ListingPage({
           </div>
         </div>
 
-        {grade ? (
-          <section className="card p-4">
-            <p className="font-semibold mb-3 flex items-center gap-2">
-              Your grade
-              <span className={`grade-chip ${letterTone(grade.letter)}`}>
-                {displayGradeLabel(grade.letter)}
-              </span>
-              <span className="text-sm font-medium text-muted">({grade.score})</span>
+        <div className="avm-grade-row">
+          <section className="card p-4 avm-card">
+            <p className="text-[11px] uppercase tracking-wide text-muted font-bold">Platform AVM</p>
+            <p className="text-lg font-semibold tracking-tight mt-1">
+              {listing.platformAvm ? usd(listing.platformAvm) : "None"}
             </p>
-            {grade.gateFails.length ? (
-              <p className="text-sm text-grade-d mb-3">{grade.gateFails.join(" · ")}</p>
-            ) : null}
-            <GradeBars grade={grade} />
+            <p className="text-xs text-muted mt-1">
+              {listing.avmSource === "mock" ? "mock AVM" : listing.avmSource}
+            </p>
           </section>
-        ) : null}
+          {grade ? (
+            <section className="card p-4 grade-card">
+              <p className="font-semibold mb-3 flex items-center gap-2">
+                Your grade
+                <span className={`grade-chip ${letterTone(grade.letter)}`}>
+                  {displayGradeLabel(grade.letter)}
+                </span>
+                <span className="text-sm font-medium text-muted">({grade.score})</span>
+              </p>
+              {grade.gateFails.length ? (
+                <p className="text-sm text-grade-d mb-3">{grade.gateFails.join(" · ")}</p>
+              ) : null}
+              <GradeBars grade={grade} />
+            </section>
+          ) : null}
+        </div>
+
+        <section className="card p-4 known-issues">
+          <p className="font-semibold">Known issues</p>
+          <p className="text-sm mt-1">{listing.knownIssues?.trim() ? listing.knownIssues : "None listed."}</p>
+        </section>
 
         <section className="card p-4 space-y-2 text-sm">
-          <Row label="Platform AVM" value={`${listing.platformAvm ? usd(listing.platformAvm) : "None"} · ${listing.avmSource === "mock" ? "mock AVM" : listing.avmSource}`} />
           <Row label="Seller ARV" value={`${listing.sellerArv ? usd(listing.sellerArv) : "—"} (seller's)`} />
           <Row label="Seller repairs" value={usd(listing.sellerRepairs)} />
           <Row label="Our rehab guess" value={usd(listing.rehabEstimate)} />
           <Row label="Original contract" value={usd(listing.originalContractPrice)} />
           <Row label="Occupancy" value={listing.occupancy} />
           <Row label="Access" value={listing.access} />
-          <Row label="Known issues" value={listing.knownIssues} />
           <Row
             label="Wholesaler"
             value={
