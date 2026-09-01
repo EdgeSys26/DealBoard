@@ -82,6 +82,10 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     if (!id) return null;
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user || user.deletedAt) return null;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastSeenAt: new Date() },
+    }).catch(() => undefined);
     return {
       id: user.id,
       email: user.email,

@@ -66,3 +66,36 @@ export async function setPlatformTitleDepositAction(formData: FormData) {
   revalidatePath("/seller");
   revalidatePath("/home");
 }
+
+export async function setPlatformLeversAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return;
+  const { getBoardLevers, setBoardLevers } = await import("./settings");
+  const current = await getBoardLevers();
+  await setBoardLevers({
+    titleDeposit: Number(formData.get("titleDeposit") ?? current.titleDeposit),
+    includedActiveSlots: Number(formData.get("includedActiveSlots") ?? current.includedActiveSlots),
+    extraListingDollars: Number(formData.get("extraListingDollars") ?? current.extraListingDollars),
+    defaultOfferFloorPct: Number(formData.get("defaultOfferFloorPct") ?? current.defaultOfferFloorPct),
+    onHoldMaxDays: Number(formData.get("onHoldMaxDays") ?? current.onHoldMaxDays),
+  });
+  revalidatePath("/admin");
+  revalidatePath("/seller");
+  revalidatePath("/home");
+}
+
+export async function addBillingAdjustmentAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return;
+  const sellerId = String(formData.get("sellerId") || "");
+  const raw = Math.abs(Math.round(Number(formData.get("amount"))));
+  const sign = String(formData.get("sign") || "+") === "-" ? -1 : 1;
+  const reason = String(formData.get("reason") || "").trim();
+  if (!sellerId || !Number.isFinite(raw) || raw <= 0 || !reason) return;
+  const seller = await prisma.user.findUnique({ where: { id: sellerId } });
+  if (!seller || seller.role !== "SELLER") return;
+  await prisma.billingAdjustment.create({
+    data: { sellerId, amount: raw * sign, reason },
+  });
+  revalidatePath("/admin");
+}

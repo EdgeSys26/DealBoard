@@ -76,9 +76,10 @@ export async function unfreezeThreads(listingId: string) {
   });
 }
 
-export function onHoldCapDate(from = new Date()) {
+export function onHoldCapDate(from = new Date(), days = MAX_ON_HOLD_DAYS) {
   const d = new Date(from);
-  d.setDate(d.getDate() + MAX_ON_HOLD_DAYS);
+  const n = Number.isFinite(days) && days > 0 ? days : MAX_ON_HOLD_DAYS;
+  d.setDate(d.getDate() + n);
   return d;
 }
 

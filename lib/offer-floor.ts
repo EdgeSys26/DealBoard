@@ -24,8 +24,13 @@ export function assertOfferFloor(
   return { ok: true };
 }
 
-export function tightenFloorPct(current: number, next: number): number {
-  if (next > DEFAULT_OFFER_FLOOR_PCT) return DEFAULT_OFFER_FLOOR_PCT;
+export function tightenFloorPct(
+  current: number,
+  next: number,
+  maxPct: number = DEFAULT_OFFER_FLOOR_PCT,
+): number {
+  const cap = Number.isFinite(maxPct) ? maxPct : DEFAULT_OFFER_FLOOR_PCT;
+  if (next > cap) return cap;
   if (next < 0) return 0;
   return Math.min(current, next);
 }
