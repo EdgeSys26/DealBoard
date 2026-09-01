@@ -26,6 +26,7 @@ model User {
   w9OnFile       Boolean  @default(false)
   quietHours     Boolean  @default(true)
   deletedAt      DateTime?
+  lastSeenAt     DateTime?
   createdAt      DateTime @default(now())
 
   buyBoxes           BuyBox[]
@@ -43,6 +44,7 @@ model User {
   threadsAsSeller    Thread[]    @relation("SellerThreads")
   workAgainGiven     WorkAgain[] @relation("FromUser")
   workAgainReceived  WorkAgain[] @relation("ToUser")
+  billingAdjustments BillingAdjustment[]
 }
 
 model BuyBox {
@@ -277,8 +279,21 @@ model Message {
 }
 
 model PlatformSetting {
-  id           String @id
-  titleDeposit Int    @default(2500)
+  id                   String @id
+  titleDeposit         Int    @default(2500)
+  includedActiveSlots  Int    @default(1)
+  extraListingDollars  Int    @default(49)
+  defaultOfferFloorPct Float  @default(10)
+  onHoldMaxDays        Int    @default(7)
+}
+
+model BillingAdjustment {
+  id        String   @id @default(cuid())
+  sellerId  String
+  seller    User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
 }
 
 model WorkAgain {
