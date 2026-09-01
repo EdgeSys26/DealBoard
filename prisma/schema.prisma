@@ -26,8 +26,9 @@ model User {
   w9OnFile       Boolean  @default(false)
   quietHours     Boolean  @default(true)
   deletedAt      DateTime?
-  lastSeenAt     DateTime?
-  createdAt      DateTime @default(now())
+  lastSeenAt          DateTime?
+  sellerOffersSeenAt  DateTime?
+  createdAt           DateTime @default(now())
 
   buyBoxes           BuyBox[]
   listings           Listing[]
@@ -119,7 +120,7 @@ model Listing {
 model CompSnapshot {
   id         String  @id @default(cuid())
   listingId  String
-  listing    Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   address    String
   salePrice  Int
   beds       Int
@@ -171,6 +172,7 @@ model Offer {
   counterPrice     Int?
   counterCloseDate DateTime?
   createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   titleFile        TitleFile?
 }
 
