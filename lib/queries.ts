@@ -47,6 +47,26 @@ export async function getHomeFeed(user: SessionUser) {
   return { box, cards, looking: user.lookingStatus === "LOOKING" };
 }
 
+export async function getBuyerBoard(user: SessionUser) {
+  const feed = await getHomeFeed(user);
+  const holds = await prisma.hold.findMany({
+    where: { buyerId: user.id, released: false, expiresAt: { gt: new Date() } },
+    include: { listing: true },
+    orderBy: { expiresAt: "asc" },
+  });
+  const offers = await prisma.offer.findMany({
+    where: { buyerId: user.id },
+    include: { listing: { include: { titleFile: { include: { slots: true } } } } },
+    orderBy: { createdAt: "desc" },
+  });
+  const saved = await prisma.favorite.findMany({
+    where: { userId: user.id },
+    include: { listing: true },
+    orderBy: { listingId: "asc" },
+  });
+  return { ...feed, holds, offers, saved };
+}
+
 export async function getListingDetail(id: string, user: SessionUser) {
   await applyLifecycle();
   const listing = await prisma.listing.findUnique({

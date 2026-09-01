@@ -6,7 +6,7 @@ import { Home, SlidersHorizontal, MessageCircle, LayoutGrid, UserRound } from "l
 
 export function BuyerNav() {
   return (
-    <nav className="sticky bottom-0 z-20 border-t border-line bg-white/95 backdrop-blur px-2 pt-2 pb-[max(10px,env(safe-area-inset-bottom))]">
+    <nav className="bottom-nav sticky bottom-0 z-20 border-t border-line bg-white/95 backdrop-blur px-2 pt-2 pb-[max(10px,env(safe-area-inset-bottom))]">
       <div className="grid grid-cols-4 gap-1">
         <Item href="/home" label="Home" icon={Home} />
         <Item href="/buy-box" label="Buy box" icon={SlidersHorizontal} />
@@ -19,7 +19,7 @@ export function BuyerNav() {
 
 export function SellerNav() {
   return (
-    <nav className="sticky bottom-0 z-20 border-t border-line bg-white/95 backdrop-blur px-2 pt-2 pb-[max(10px,env(safe-area-inset-bottom))]">
+    <nav className="bottom-nav sticky bottom-0 z-20 border-t border-line bg-white/95 backdrop-blur px-2 pt-2 pb-[max(10px,env(safe-area-inset-bottom))]">
       <div className="grid grid-cols-4 gap-1">
         <Item href="/seller" label="Board" icon={LayoutGrid} />
         <Item href="/seller/new" label="New" icon={Home} />

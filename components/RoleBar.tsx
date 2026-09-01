@@ -10,7 +10,7 @@ const ROLES: { role: Role; label: string }[] = [
 export function RoleBar({ current }: { current: Role }) {
   return (
     <div className="sticky top-0 z-30 bg-canvas/95 backdrop-blur border-b border-line px-3 pt-[max(10px,env(safe-area-inset-top))] pb-2">
-      <div className="grid grid-cols-3 gap-1">
+      <div className="role-bar-pills grid grid-cols-3 gap-1">
         {ROLES.map(({ role, label }) => {
           const on = current === role;
           return (
