@@ -269,6 +269,47 @@ body {
   align-items: end;
 }
 
+.price-with-star {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.star-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 1px;
+  width: auto;
+}
+
+.star-btn[data-on="true"] {
+  color: #E6B800;
+}
+
+.avm-grade-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.avm-card {
+  min-width: 0;
+}
+
+.grade-card {
+  min-width: 0;
+}
+
+.known-issues {
+  background: color-mix(in srgb, var(--grade-b) 16%, var(--card));
+  border-color: color-mix(in srgb, var(--grade-b) 55%, var(--line));
+}
+
 @media (min-width: 900px) {
   .match-grid {
     display: grid;
@@ -280,6 +321,13 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
+  }
+
+  .avm-grade-row {
+    display: grid;
+    grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
   }
 }
 
