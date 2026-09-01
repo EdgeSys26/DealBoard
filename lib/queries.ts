@@ -3,6 +3,9 @@ import { applyLifecycle } from "./lifecycle";
 import { gradeAndCache } from "./grade-listing";
 import { isHomeVisible, leftover } from "./grade";
 import { minOfferPrice } from "./offer-floor";
+import { listingTitleDeposit } from "./deposit";
+import { listingPhotos } from "./listing-photos";
+import { getPlatformTitleDeposit } from "./settings";
 import { BILLING_BASE, BILLING_EXTRA, INCLUDED_ACTIVE_SLOTS, type Letter } from "./types";
 import type { SessionUser } from "./auth";
 import type { GradeResult } from "./types";
@@ -105,6 +108,7 @@ export async function getListingDetail(id: string, user: SessionUser) {
   const myOffer = listing.offers.find((o) => o.buyerId === user.id);
   const accepted = listing.offers.find((o) => o.status === "ACCEPTED");
   const floor = minOfferPrice(listing.assignmentPrice, listing.offerFloorPct);
+  const titleDeposit = listingTitleDeposit(listing, await getPlatformTitleDeposit());
   const leftoverNow = leftover(
     listing.platformAvm,
     myOffer?.price ?? listing.assignmentPrice,
@@ -120,7 +124,8 @@ export async function getListingDetail(id: string, user: SessionUser) {
     accepted,
     floor,
     leftoverNow,
-    photos: JSON.parse(listing.photosJson) as string[],
+    titleDeposit,
+    photos: listingPhotos(listing),
     showSellerPhone: Boolean(accepted && accepted.buyerId === user.id),
     showWire: Boolean(listing.titleFile?.wireReleased && accepted),
   };
@@ -155,7 +160,12 @@ export async function getSellerDashboard(userId: string) {
     orderBy: { createdAt: "desc" },
     take: 5,
   });
-  return { listings, meter: slotMeter(activeCount), blasts };
+  return {
+    listings,
+    meter: slotMeter(activeCount),
+    blasts,
+    platformDeposit: await getPlatformTitleDeposit(),
+  };
 }
 
 export function isFrozenAccount(user: { deletedAt: Date | null; email: string }) {
