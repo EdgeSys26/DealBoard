@@ -56,3 +56,13 @@ export async function killListingAdminAction(listingId: string) {
   revalidatePath("/home");
   revalidatePath("/seller");
 }
+
+export async function setPlatformTitleDepositAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return;
+  const { setPlatformTitleDeposit } = await import("./settings");
+  await setPlatformTitleDeposit(Number(formData.get("titleDeposit")));
+  revalidatePath("/admin");
+  revalidatePath("/seller");
+  revalidatePath("/home");
+}

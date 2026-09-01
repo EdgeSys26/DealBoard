@@ -5,13 +5,14 @@ import { prisma } from "./prisma";
 import { requireUser } from "./auth";
 import { applyLifecycle } from "./lifecycle";
 import { assertOfferFloor } from "./offer-floor";
+import { listingTitleDeposit } from "./deposit";
+import { getPlatformTitleDeposit } from "./settings";
 
 export async function placeOfferAction(formData: FormData) {
   const user = await requireUser();
   await applyLifecycle();
   const listingId = String(formData.get("listingId"));
   const price = Number(formData.get("price"));
-  const deposit = Number(formData.get("deposit"));
   const closeDate = new Date(String(formData.get("closeDate")));
   const attachPof = String(formData.get("attachPof") || "") === "on";
 
@@ -22,6 +23,7 @@ export async function placeOfferAction(formData: FormData) {
 
   const floor = assertOfferFloor(price, listing.assignmentPrice, listing.offerFloorPct);
   if (!floor.ok) return;
+  const deposit = listingTitleDeposit(listing, await getPlatformTitleDeposit());
 
   if (attachPof) {
     await prisma.user.update({
