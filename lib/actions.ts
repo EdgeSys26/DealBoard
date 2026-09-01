@@ -16,7 +16,7 @@ import { applyLifecycle, freezeThreads, onHoldCapDate, unfreezeThreads } from ".
 import { assertOfferFloor, tightenFloorPct } from "./offer-floor";
 import { HOLD_MS, NOBLESVILLE_SQUARE, type AlertMode, type WorkLevel } from "./types";
 import { clampListingDeposit, listingTitleDeposit } from "./deposit";
-import { getPlatformTitleDeposit } from "./settings";
+import { getBoardLevers, getPlatformTitleDeposit } from "./settings";
 import { PHOTO_NEW } from "./listing-photos";
 
 export async function loginAction(formData: FormData) {
@@ -292,7 +292,7 @@ export async function setListingStatusAction(listingId: string, status: string) 
   if (status === "ON_HOLD") {
     await prisma.listing.update({
       where: { id: listingId },
-      data: { status: "ON_HOLD", onHoldUntil: onHoldCapDate() },
+      data: { status: "ON_HOLD", onHoldUntil: onHoldCapDate(new Date(), (await getBoardLevers()).onHoldMaxDays) },
     });
     await freezeThreads(
       listingId,
@@ -321,9 +321,10 @@ export async function tightenFloorAction(listingId: string, formData: FormData) 
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing || listing.sellerId !== user.id) return;
   const next = Number(formData.get("offerFloorPct"));
+  const levers = await getBoardLevers();
   await prisma.listing.update({
     where: { id: listingId },
-    data: { offerFloorPct: tightenFloorPct(listing.offerFloorPct, next) },
+    data: { offerFloorPct: tightenFloorPct(listing.offerFloorPct, next, levers.defaultOfferFloorPct) },
   });
   revalidatePath("/seller");
 }
@@ -532,7 +533,7 @@ export async function createListingAction(formData: FormData) {
       verified: String(formData.get("contractUploaded")) === "on",
       workLevel: String(formData.get("workLevel")),
       rehabEstimate: Number(formData.get("rehabEstimate") || 0),
-      offerFloorPct: Number(formData.get("offerFloorPct") || 10),
+      offerFloorPct: Number(formData.get("offerFloorPct") || (await getBoardLevers()).defaultOfferFloorPct),
       titleDeposit: clampListingDeposit(
         Number(formData.get("titleDeposit")),
         await getPlatformTitleDeposit(),
