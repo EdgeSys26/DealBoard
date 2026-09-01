@@ -3,7 +3,16 @@ import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { displayGradeLabel, getListingDetail, letterTone } from "@/lib/queries";
 import { holdListingAction, pickTitleSlotAction } from "@/lib/actions";
-import { favoriteAction, placeOfferAction, sendMessageAction } from "@/lib/deal-actions";
+import {
+  acceptCounterAction,
+  declineCounterAction,
+  favoriteAction,
+  hideListingAction,
+  placeOfferAction,
+  sendMessageAction,
+  unhideListingAction,
+} from "@/lib/deal-actions";
+import { offerCardStatus } from "@/lib/offer-status";
 import { BuyerNav, SellerNav } from "@/components/Nav";
 import { GradeBars } from "@/components/GradeBars";
 import { CompMap } from "@/components/CompMap";
@@ -39,7 +48,7 @@ export default async function ListingPage({
     );
   }
 
-  const { listing, grade, myHold, myOffer, accepted, floor, leftoverNow, titleDeposit, photos, showSellerPhone, showWire } = data;
+  const { listing, grade, myHold, myOffer, accepted, floor, leftoverNow, titleDeposit, photos, isHidden, showSellerPhone, showWire } = data;
   const days = Math.max(0, daysBetween(new Date(), listing.contractExpiresAt));
   const letter = grade?.letter ?? "—";
   const otherHold = listing.holds.find((h) => h.buyerId !== user.id);
@@ -157,7 +166,36 @@ export default async function ListingPage({
                 </form>
               ) : null}
 
-              {listing.status === "ACTIVE" ? (
+              {myOffer?.status === "COUNTERED" ? (
+                <>
+                  <p className="font-semibold">{offerCardStatus(myOffer)}</p>
+                  <p className="text-sm">
+                    Seller countered {usd(myOffer.counterPrice ?? myOffer.price)} · close{" "}
+                    {myOffer.counterCloseDate
+                      ? myOffer.counterCloseDate.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "—"}
+                    . One round. Accept or Decline.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <form action={acceptCounterAction.bind(null, myOffer.id)}>
+                      <button className="btn-primary" type="submit">
+                        Accept
+                      </button>
+                    </form>
+                    <form action={declineCounterAction.bind(null, myOffer.id)}>
+                      <button className="btn-secondary" type="submit">
+                        Decline
+                      </button>
+                    </form>
+                  </div>
+                </>
+              ) : myOffer ? (
+                <p className="text-sm font-semibold">{offerCardStatus(myOffer)}</p>
+              ) : listing.status === "ACTIVE" ? (
               <>
               <p className="font-semibold">Place offer</p>
               <p className="text-xs text-muted">
@@ -192,16 +230,7 @@ export default async function ListingPage({
                   Place offer
                 </button>
               </form>
-              {myOffer ? (
-                <p className="text-sm">
-                  Your offer {usd(myOffer.price)} is {myOffer.status.toLowerCase()}.
-                </p>
-              ) : null}
               </>
-              ) : myOffer ? (
-                <p className="text-sm">
-                  Your offer {usd(myOffer.price)} is {myOffer.status.toLowerCase()}.
-                </p>
               ) : null}
             </section>
 
@@ -225,11 +254,19 @@ export default async function ListingPage({
                   Favorite seller
                 </button>
               </form>
-              <form action={favoriteAction.bind(null, listing.id, "DONT_SHOW")}>
-                <button className="btn-secondary" type="submit">
-                  Don&apos;t show this seller
-                </button>
-              </form>
+              {isHidden ? (
+                <form action={unhideListingAction.bind(null, listing.id)}>
+                  <button className="btn-secondary" type="submit">
+                    Unhide
+                  </button>
+                </form>
+              ) : (
+                <form action={hideListingAction.bind(null, listing.id)}>
+                  <button className="btn-secondary" type="submit">
+                    Hide
+                  </button>
+                </form>
+              )}
             </div>
 
             <ReportBlock listingId={listing.id} />
