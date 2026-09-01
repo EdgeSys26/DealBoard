@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { demoLoginAction, loginAction } from "@/lib/actions";
 import type { Role } from "@/lib/types";
+import { PHOTO_CICERO, PHOTO_PLEASANT } from "@/lib/listing-photos";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ const MOCKS = [
   {
     letter: "A+",
     tone: "green",
-    photo: "/listings/pleasant-1.svg",
+    photo: PHOTO_PLEASANT,
     address: "1847 Pleasant St",
     city: "Noblesville, IN 46060",
     price: "$189k",
@@ -30,7 +31,7 @@ const MOCKS = [
   {
     letter: "B",
     tone: "yellow",
-    photo: "/listings/cicero-1.svg",
+    photo: PHOTO_CICERO,
     address: "622 Cicero Ave",
     city: "Noblesville, IN 46060",
     price: "$241k",
@@ -60,7 +61,7 @@ export default async function LandingPage() {
         We don&apos;t sell houses and we don&apos;t hold deposits.
       </p>
 
-      <div className="mt-7 space-y-3">
+      <div className="mt-7 match-grid">
         {MOCKS.map((card) => (
           <article key={card.address} className="card overflow-hidden">
             <div className="relative h-40 bg-canvas">

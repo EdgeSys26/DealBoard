@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { createListingAction } from "@/lib/actions";
+import { getPlatformTitleDeposit } from "@/lib/settings";
 import { TopBar } from "@/components/TopBar";
 import { SellerNav } from "@/components/Nav";
+import { usd } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,7 @@ export default async function NewListingPage() {
   const user = await getSessionUser();
   if (!user) redirect("/");
   if (user.role === "BUYER") redirect("/home");
+  const platformDeposit = await getPlatformTitleDeposit();
 
   return (
     <div className="min-h-svh flex flex-col">
@@ -45,6 +48,19 @@ export default async function NewListingPage() {
             <span className="floor-copy">Offer floor: 10% under</span>
             <input name="offerFloorPct" type="number" min={0} max={10} defaultValue={10} />
           </label>
+          <label className="field">
+            Title deposit
+            <input
+              name="titleDeposit"
+              type="number"
+              min={platformDeposit}
+              step={100}
+              defaultValue={platformDeposit}
+            />
+          </label>
+          <p className="text-[11px] text-muted -mt-1">
+            Platform floor is {usd(platformDeposit)}. You may raise it, not lower it. Buyer does not set this.
+          </p>
           <p className="text-[11px] text-muted -mt-1">
             Buyer cannot offer more than this percent below asking. Default 10%. You may tighten later.
           </p>

@@ -38,6 +38,7 @@ body {
   background: var(--canvas);
   color: var(--ink);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.015em;
 }
 
 body {
@@ -66,10 +67,6 @@ body {
     display: none;
   }
 
-  .role-bar-pills {
-    max-width: 360px;
-  }
-
   .dash-page {
     padding-left: 8px;
     padding-right: 8px;
@@ -88,18 +85,18 @@ body {
 
 .board-table th {
   text-align: left;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 
 .board-table td {
-  padding: 13px 12px;
+  padding: 9px 10px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
@@ -108,21 +105,46 @@ body {
   background: color-mix(in srgb, var(--accent) 5%, var(--card));
 }
 
+.dash-chrome {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  min-height: 46px;
+  padding: max(6px, env(safe-area-inset-top)) 16px 6px;
+  background: color-mix(in srgb, var(--canvas) 88%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+
+.dash-brand {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
 .dash-tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   overflow-x: auto;
-  border-bottom: 1px solid var(--line);
+  flex: 1;
+  min-width: 0;
 }
 
 .dash-tab {
   flex: 0 0 auto;
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 7px 10px;
+  font-size: 13px;
   font-weight: 650;
+  letter-spacing: -0.02em;
   color: var(--muted);
   border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
 }
 
 .dash-tab[data-on="true"] {
@@ -130,17 +152,53 @@ body {
   border-bottom-color: var(--accent);
 }
 
+.role-bar-pills {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.role-pill {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.role-pill.is-on {
+  background: var(--accent);
+  color: var(--card);
+  border-color: var(--accent);
+}
+
 .match-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+}
+
+.offer-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: end;
 }
 
 @media (min-width: 900px) {
   .match-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 12px;
+  }
+
+  .offer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 }
 
@@ -154,22 +212,20 @@ details.blast-menu > summary::-webkit-details-marker {
 
 .card {
   background: var(--card);
-  border-radius: 22px;
+  border-radius: 12px;
   border: 1px solid var(--line);
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--ink) 4%, transparent),
-    0 14px 32px color-mix(in srgb, var(--ink) 7%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent);
 }
 
 .btn-primary {
   background: var(--accent);
   color: var(--card);
   border: 0;
-  border-radius: 14px;
-  font-weight: 600;
-  padding: 14px 16px;
+  border-radius: 10px;
+  font-weight: 650;
+  padding: 11px 14px;
   width: 100%;
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .btn-primary:active,
@@ -185,11 +241,11 @@ details.blast-menu > summary::-webkit-details-marker {
   background: var(--card);
   color: var(--ink);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  font-weight: 600;
-  padding: 14px 16px;
+  border-radius: 10px;
+  font-weight: 650;
+  padding: 10px 14px;
   width: 100%;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .surface-accent {
@@ -220,8 +276,8 @@ details.blast-menu > summary::-webkit-details-marker {
   min-width: 44px;
   height: 44px;
   padding: 0 9px;
-  border-radius: 13px;
-  font-size: 15px;
+  border-radius: 10px;
+  font-size: 14px;
   z-index: 1;
 }
 
@@ -236,20 +292,22 @@ details.blast-menu > summary::-webkit-details-marker {
 
 .grade-pill.green,
 .grade-chip.green {
-  background: color-mix(in srgb, var(--grade-a) 28%, transparent);
+  background: color-mix(in srgb, var(--grade-a) 32%, transparent);
   border-color: var(--grade-a);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--grade-a) 22%, transparent),
-    0 0 18px color-mix(in srgb, var(--grade-a) 50%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--grade-a) 28%, transparent),
+    0 0 16px color-mix(in srgb, var(--grade-a) 62%, transparent),
+    0 0 28px color-mix(in srgb, var(--grade-a) 28%, transparent);
 }
 
 .grade-pill.yellow,
 .grade-chip.yellow {
-  background: color-mix(in srgb, var(--grade-b) 28%, transparent);
+  background: color-mix(in srgb, var(--grade-b) 32%, transparent);
   border-color: var(--grade-b);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--grade-b) 22%, transparent),
-    0 0 18px color-mix(in srgb, var(--grade-b) 48%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--grade-b) 28%, transparent),
+    0 0 16px color-mix(in srgb, var(--grade-b) 58%, transparent),
+    0 0 28px color-mix(in srgb, var(--grade-b) 26%, transparent);
 }
 
 .grade-pill.red,
@@ -282,8 +340,8 @@ select,
 textarea {
   width: 100%;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 12px;
+  border-radius: 8px;
+  padding: 9px 10px;
   font: inherit;
   background: var(--card);
   color: var(--ink);
@@ -305,8 +363,8 @@ label.field {
   border: 1px solid var(--line);
   background: var(--card);
   border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: 5px 9px;
+  font-size: 12px;
   font-weight: 600;
 }
 

@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getAdminData, isFrozenAccount } from "@/lib/queries";
+import { getPlatformTitleDeposit } from "@/lib/settings";
 import { blacklistAction, logoutAction, resolveReportAction } from "@/lib/actions";
 import {
   expireListingAdminAction,
   freezeUserAction,
   killListingAdminAction,
+  setPlatformTitleDepositAction,
   unfreezeUserAction,
 } from "@/lib/admin-actions";
 import { TopBar } from "@/components/TopBar";
@@ -19,17 +21,42 @@ export default async function AdminPage() {
   const user = await getSessionUser();
   if (!user) redirect("/");
   if (user.role !== "ADMIN") redirect("/home");
-  const { reports, users, listings, muteRates, fallthroughs } = await getAdminData();
+  const [{ reports, users, listings, muteRates, fallthroughs }, platformDeposit] = await Promise.all([
+    getAdminData(),
+    getPlatformTitleDeposit(),
+  ]);
   const muteAlerts = muteRates.filter((row) => row.alert);
   const openReports = reports.filter((r) => r.status === "OPEN");
 
   return (
     <div className="min-h-svh flex flex-col">
       <TopBar user={user} title="Admin" />
-      <main className="flex-1 px-4 pb-8 space-y-3">
+      <main className="flex-1 px-4 pb-8 space-y-2">
         <p className="text-sm text-muted">
           Queue, users, listings. Freeze and blacklist are manual. No auto-ban.
         </p>
+
+        <section className="card px-4 py-3">
+          <form action={setPlatformTitleDepositAction} className="flex flex-wrap items-end gap-2">
+            <label className="field w-auto">
+              Title deposit
+              <input
+                name="titleDeposit"
+                type="number"
+                min={1}
+                step={100}
+                defaultValue={platformDeposit}
+                className="w-32"
+              />
+            </label>
+            <button className="btn-secondary w-auto px-3 py-2 text-sm" type="submit">
+              Save
+            </button>
+            <p className="text-xs text-muted pb-1">
+              Default to title. Not a percent of price. Sellers may raise a listing, not go under this.
+            </p>
+          </form>
+        </section>
 
         <section className="card p-4 space-y-3">
           <p className="font-semibold">Queue</p>
