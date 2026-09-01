@@ -105,6 +105,47 @@ body {
   background: color-mix(in srgb, var(--accent) 5%, var(--card));
 }
 
+.board-table tr.offer-bid-row td {
+  padding: 16px 12px;
+}
+
+.board-table tr.offer-bid-row.tone-green td {
+  background: color-mix(in srgb, var(--grade-a) 8%, var(--card));
+}
+
+.board-table tr.offer-bid-row.tone-yellow td {
+  background: color-mix(in srgb, var(--grade-b) 10%, var(--card));
+}
+
+.board-table tr.offer-bid-row.tone-red td {
+  background: color-mix(in srgb, var(--grade-d) 7%, var(--card));
+}
+
+.bid-pct {
+  display: inline-block;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.bid-pct.green {
+  color: #128a42;
+}
+
+.bid-pct.yellow {
+  color: #9a7800;
+}
+
+.bid-pct.red {
+  color: var(--grade-d);
+}
+
+.lever-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+
 .dash-chrome {
   position: sticky;
   top: 0;

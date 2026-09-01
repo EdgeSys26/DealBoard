@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { createListingAction } from "@/lib/actions";
-import { getPlatformTitleDeposit } from "@/lib/settings";
+import { getBoardLevers } from "@/lib/settings";
 import { TopBar } from "@/components/TopBar";
 import { SellerNav } from "@/components/Nav";
 import { usd } from "@/lib/money";
@@ -12,7 +12,8 @@ export default async function NewListingPage() {
   const user = await getSessionUser();
   if (!user) redirect("/");
   if (user.role === "BUYER") redirect("/home");
-  const platformDeposit = await getPlatformTitleDeposit();
+  const levers = await getBoardLevers();
+  const platformDeposit = levers.titleDeposit;
 
   return (
     <div className="min-h-svh flex flex-col">
@@ -45,8 +46,14 @@ export default async function NewListingPage() {
             </select>
           </label>
           <label className="field">
-            <span className="floor-copy">Offer floor: 10% under</span>
-            <input name="offerFloorPct" type="number" min={0} max={10} defaultValue={10} />
+            <span className="floor-copy">Offer floor: {levers.defaultOfferFloorPct}% under</span>
+            <input
+              name="offerFloorPct"
+              type="number"
+              min={0}
+              max={levers.defaultOfferFloorPct}
+              defaultValue={levers.defaultOfferFloorPct}
+            />
           </label>
           <label className="field">
             Title deposit
@@ -62,7 +69,7 @@ export default async function NewListingPage() {
             Platform floor is {usd(platformDeposit)}. You may raise it, not lower it. Buyer does not set this.
           </p>
           <p className="text-[11px] text-muted -mt-1">
-            Buyer cannot offer more than this percent below asking. Default 10%. You may tighten later.
+            Buyer cannot offer more than this percent below asking. Default {levers.defaultOfferFloorPct}%. You may tighten later.
           </p>
           <label className="field">Our rehab guess<input name="rehabEstimate" type="number" defaultValue={15000} /></label>
           <label className="field">Known issues<textarea name="knownIssues" rows={3} /></label>

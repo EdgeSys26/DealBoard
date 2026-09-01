@@ -21,6 +21,14 @@ const BUYER_TABS = [
   { id: "saved", href: "/home?tab=saved", label: "Saved" },
 ];
 
+const ADMIN_TABS = [
+  { id: "levers", href: "/admin?tab=levers", label: "Levers" },
+  { id: "people", href: "/admin?tab=people", label: "People" },
+  { id: "listings", href: "/admin?tab=listings", label: "Listings" },
+  { id: "billing", href: "/admin?tab=billing", label: "Billing" },
+  { id: "queue", href: "/admin?tab=queue", label: "Queue" },
+];
+
 const ROLES: { role: Role; label: string }[] = [
   { role: "BUYER", label: "Buyer" },
   { role: "SELLER", label: "Seller" },
@@ -33,14 +41,26 @@ export function ChromeBar({ current }: { current: Role }) {
   const tab = params.get("tab") ?? "";
   const seller = path === "/seller" || path.startsWith("/seller/");
   const buyer = path === "/home";
-  const tabs = path === "/seller" || path === "/seller/billing" ? SELLER_TABS : buyer ? BUYER_TABS : null;
-  const active = seller
-    ? tab === "offers" || tab === "title" || tab === "billing"
+  const admin = path === "/admin";
+  const tabs =
+    path === "/seller" || path === "/seller/billing"
+      ? SELLER_TABS
+      : buyer
+        ? BUYER_TABS
+        : admin
+          ? ADMIN_TABS
+          : null;
+  const active = admin
+    ? tab === "people" || tab === "listings" || tab === "billing" || tab === "queue"
       ? tab
-      : "listings"
-    : tab === "held" || tab === "offers" || tab === "title" || tab === "saved"
-      ? tab
-      : "matches";
+      : "levers"
+    : seller
+      ? tab === "offers" || tab === "title" || tab === "billing"
+        ? tab
+        : "listings"
+      : tab === "held" || tab === "offers" || tab === "title" || tab === "saved"
+        ? tab
+        : "matches";
 
   return (
     <header className="dash-chrome">
