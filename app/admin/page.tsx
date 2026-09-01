@@ -1,15 +1,13 @@
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getAdminData, isFrozenAccount } from "@/lib/queries";
+import { blacklistAction, logoutAction, resolveReportAction } from "@/lib/actions";
 import {
-  blacklistAction,
   expireListingAdminAction,
   freezeUserAction,
   killListingAdminAction,
-  logoutAction,
-  resolveReportAction,
   unfreezeUserAction,
-} from "@/lib/actions";
+} from "@/lib/admin-actions";
 import { TopBar } from "@/components/TopBar";
 import { usd } from "@/lib/money";
 import { BADGE_LABEL, STATUS_LABEL, type Badge, type ListingStatus } from "@/lib/types";
