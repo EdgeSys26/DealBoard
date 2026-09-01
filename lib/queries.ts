@@ -6,6 +6,7 @@ import { minOfferPrice } from "./offer-floor";
 import { listingTitleDeposit } from "./deposit";
 import { listingPhotos } from "./listing-photos";
 import { getBoardLevers, getPlatformTitleDeposit, type BoardLevers } from "./settings";
+import { isUnseenSellerOffer, listingExpiresSoon, sellerBoardStats } from "./seller-board";
 import { BILLING_BASE, type Letter } from "./types";
 import type { SessionUser } from "./auth";
 import type { GradeResult } from "./types";
@@ -179,13 +180,57 @@ export async function getSellerDashboard(userId: string) {
     orderBy: { createdAt: "desc" },
     take: 5,
   });
+  const seller = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { sellerOffersSeenAt: true },
+  });
+  const seenAt = seller?.sellerOffersSeenAt ?? null;
+  const newOfferCount = listings.reduce(
+    (n, listing) => n + listing.offers.filter((o) => isUnseenSellerOffer(o, seenAt)).length,
+    0,
+  );
+  const expiringIds = listings.filter((l) => listingExpiresSoon(l)).map((l) => l.id);
   return {
     listings,
     meter: slotMeter(activeCount, levers),
     blasts,
     platformDeposit: levers.titleDeposit,
     levers,
+    stats: sellerBoardStats(listings),
+    newOfferCount,
+    expiringIds,
   };
+}
+
+export async function getSellerTabBadges(userId: string) {
+  const seller = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { sellerOffersSeenAt: true },
+  });
+  const listings = await prisma.listing.findMany({
+    where: { sellerId: userId },
+    select: {
+      id: true,
+      status: true,
+      contractExpiresAt: true,
+      offers: { select: { status: true, createdAt: true, updatedAt: true, counterPrice: true } },
+    },
+  });
+  const seenAt = seller?.sellerOffersSeenAt ?? null;
+  return {
+    newOfferCount: listings.reduce(
+      (n, listing) => n + listing.offers.filter((o) => isUnseenSellerOffer(o, seenAt)).length,
+      0,
+    ),
+    expiring: listings.some((l) => listingExpiresSoon(l)),
+  };
+}
+
+export async function markSellerOffersSeen(userId: string) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { sellerOffersSeenAt: new Date() },
+  });
 }
 
 export function isFrozenAccount(user: { deletedAt: Date | null; email: string }) {
