@@ -5,8 +5,8 @@ import { isHomeVisible, leftover } from "./grade";
 import { minOfferPrice } from "./offer-floor";
 import { listingTitleDeposit } from "./deposit";
 import { listingPhotos } from "./listing-photos";
-import { getPlatformTitleDeposit } from "./settings";
-import { BILLING_BASE, BILLING_EXTRA, INCLUDED_ACTIVE_SLOTS, type Letter } from "./types";
+import { getBoardLevers, getPlatformTitleDeposit, type BoardLevers } from "./settings";
+import { BILLING_BASE, type Letter } from "./types";
 import type { SessionUser } from "./auth";
 import type { GradeResult } from "./types";
 
@@ -131,25 +131,30 @@ export async function getListingDetail(id: string, user: SessionUser) {
   };
 }
 
-export function slotMeter(activeCount: number) {
-  const extra = Math.max(0, activeCount - INCLUDED_ACTIVE_SLOTS);
+export function slotMeter(activeCount: number, levers: BoardLevers) {
+  const extra = Math.max(0, activeCount - levers.includedActiveSlots);
   return {
     activeCount,
-    included: INCLUDED_ACTIVE_SLOTS,
+    included: levers.includedActiveSlots,
     extra,
-    monthly: BILLING_BASE + extra * BILLING_EXTRA,
+    monthly: BILLING_BASE + extra * levers.extraListingDollars,
     base: BILLING_BASE,
-    extraEach: BILLING_EXTRA,
+    extraEach: levers.extraListingDollars,
   };
+}
+
+export function thisMonthStart(now = new Date()) {
+  return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
 export async function getSellerDashboard(userId: string) {
   await applyLifecycle();
+  const levers = await getBoardLevers();
   const listings = await prisma.listing.findMany({
     where: { sellerId: userId },
     include: {
       holds: { where: { released: false, expiresAt: { gt: new Date() } } },
-      offers: true,
+      offers: { include: { buyer: true }, orderBy: { createdAt: "desc" } },
       titleSlots: true,
     },
     orderBy: { createdAt: "desc" },
@@ -162,9 +167,10 @@ export async function getSellerDashboard(userId: string) {
   });
   return {
     listings,
-    meter: slotMeter(activeCount),
+    meter: slotMeter(activeCount, levers),
     blasts,
-    platformDeposit: await getPlatformTitleDeposit(),
+    platformDeposit: levers.titleDeposit,
+    levers,
   };
 }
 
@@ -173,6 +179,7 @@ export function isFrozenAccount(user: { deletedAt: Date | null; email: string })
 }
 
 export async function getAdminData() {
+  const levers = await getBoardLevers();
   const reports = await prisma.report.findMany({
     include: { reporter: true, listing: true },
     orderBy: { createdAt: "desc" },
@@ -180,12 +187,18 @@ export async function getAdminData() {
   const users = await prisma.user.findMany({
     include: {
       strikes: { orderBy: { createdAt: "desc" } },
+      listings: { select: { id: true, status: true } },
+      offers: { include: { listing: { select: { status: true } } } },
       _count: { select: { mutes: true, mutedBy: true, offers: true, holds: true } },
     },
     orderBy: { createdAt: "desc" },
   });
   const listings = await prisma.listing.findMany({
     include: { seller: true, offers: true },
+    orderBy: { createdAt: "desc" },
+  });
+  const adjustments = await prisma.billingAdjustment.findMany({
+    include: { seller: true },
     orderBy: { createdAt: "desc" },
   });
   const muteRates = users
@@ -205,7 +218,41 @@ export async function getAdminData() {
     include: { listing: true, buyer: true },
     orderBy: { createdAt: "desc" },
   });
-  return { reports, users, listings, muteRates, fallthroughs };
+  const monthStart = thisMonthStart();
+  const sellerBilling = users
+    .filter((u) => u.role === "SELLER")
+    .map((u) => {
+      const activeCount = listings.filter((l) => l.sellerId === u.id && l.status === "ACTIVE").length;
+      const meter = slotMeter(activeCount, levers);
+      const monthAdj = adjustments.filter((a) => a.sellerId === u.id && a.createdAt >= monthStart);
+      const adjSum = monthAdj.reduce((sum, a) => sum + a.amount, 0);
+      return {
+        seller: u,
+        meter,
+        monthAdj,
+        adjSum,
+        net: meter.monthly + adjSum,
+      };
+    });
+  return { reports, users, listings, muteRates, fallthroughs, levers, adjustments, sellerBilling };
+}
+
+export function personStats(user: {
+  role: string;
+  fundedCloses: number;
+  listings: { status: string }[];
+  offers: { status: string; listing: { status: string } }[];
+}) {
+  const fromOffers = user.offers.filter(
+    (o) => o.status === "ACCEPTED" && o.listing.status === "ASSIGNED",
+  ).length;
+  const fromListings = user.listings.filter((l) => l.status === "ASSIGNED").length;
+  const fundedBuys = Math.max(fromOffers, user.role === "BUYER" ? user.fundedCloses : 0);
+  const fundedSells = Math.max(fromListings, user.role === "SELLER" ? user.fundedCloses : 0);
+  const fallThroughs = user.offers.filter(
+    (o) => o.status === "ACCEPTED" && o.listing.status !== "ASSIGNED",
+  ).length;
+  return { fundedBuys, fundedSells, fallThroughs };
 }
 
 export function letterTone(letter: Letter | string | undefined) {
