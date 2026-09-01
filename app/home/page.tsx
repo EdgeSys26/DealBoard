@@ -10,6 +10,7 @@ import {
   unhideListingAction,
 } from "@/lib/deal-actions";
 import { BuyerNav } from "@/components/Nav";
+import { SaveStar } from "@/components/SaveStar";
 import { listingPhotos } from "@/lib/listing-photos";
 import { compactUsd, usd } from "@/lib/money";
 import { offerCardStatus } from "@/lib/offer-status";
@@ -33,15 +34,17 @@ function closeDay(date: Date) {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; pane?: string }>;
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/");
   if (user.role === "SELLER") redirect("/seller");
   if (user.role === "ADMIN") redirect("/admin");
 
-  const tab = buyerTab((await searchParams).tab);
-  const { box, cards, looking, holds, offers, saved, hidden } = await getBuyerBoard(user);
+  const params = await searchParams;
+  const tab = buyerTab(params.tab);
+  const { box, cards, looking, holds, offers, saved, savedSellers, hidden } = await getBuyerBoard(user);
+  const savedPane = params.pane === "sellers" ? "sellers" : "listings";
   const titleRows = offers.filter((o) => o.status === "ACCEPTED");
 
   return (
@@ -81,7 +84,7 @@ export default async function HomePage({
             ) : null}
 
             <div className="match-grid">
-              {cards.map(({ listing, grade, offer }) => {
+              {cards.map(({ listing, grade, offer, saved: listingSaved }) => {
                 const photos = listingPhotos(listing);
                 const days = Math.max(0, daysBetween(new Date(), listing.contractExpiresAt));
                 const letter = (grade?.letter ?? "?") as Letter;
@@ -98,11 +101,20 @@ export default async function HomePage({
                           </span>
                         ) : null}
                       </div>
-                      <div className="px-3 pt-3">
-                        <div className="flex justify-between gap-2">
-                          <p className="font-semibold tracking-tight leading-tight">{listing.address}</p>
-                          <p className="font-semibold text-accent">{compactUsd(listing.assignmentPrice)}</p>
-                        </div>
+                    </Link>
+                    <div className="px-3 pt-3">
+                      <div className="flex justify-between gap-2">
+                        <Link href={`/listings/${listing.id}`} className="font-semibold tracking-tight leading-tight">
+                          {listing.address}
+                        </Link>
+                        <p className="price-with-star">
+                          <Link href={`/listings/${listing.id}`} className="font-semibold text-accent">
+                            {compactUsd(listing.assignmentPrice)}
+                          </Link>
+                          <SaveStar listingId={listing.id} saved={listingSaved} />
+                        </p>
+                      </div>
+                      <Link href={`/listings/${listing.id}`} className="block">
                         <p className="text-xs text-muted mt-1">
                           {listing.city} {listing.zip} · {listing.beds}/{listing.baths} · {listing.sf} sf ·{" "}
                           {WORK_LEVEL_LABEL[listing.workLevel as WorkLevel]} ·{" "}
@@ -117,8 +129,8 @@ export default async function HomePage({
                         {listing.id === "listing_pleasant" && !offer ? (
                           <p className="text-xs font-semibold text-accent mt-1">2-hour hold on this card</p>
                         ) : null}
-                      </div>
-                    </Link>
+                      </Link>
+                    </div>
                     <form action={hideListingAction.bind(null, listing.id)} className="px-3 pb-3 pt-2">
                       <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
                         Hide
@@ -280,35 +292,85 @@ export default async function HomePage({
         ) : null}
 
         {tab === "saved" ? (
-          saved.length === 0 ? (
-            <div className="card p-4">
-              <p className="font-semibold">Nothing saved</p>
-              <p className="text-sm text-muted mt-1">Favorite a seller from a listing to keep them here.</p>
+          <>
+            <div className="flex flex-wrap gap-1">
+              <Link
+                href="/home?tab=saved"
+                className="chip"
+                data-on={savedPane === "listings" ? "true" : "false"}
+              >
+                Listings
+              </Link>
+              <Link
+                href="/home?tab=saved&pane=sellers"
+                className="chip"
+                data-on={savedPane === "sellers" ? "true" : "false"}
+              >
+                Sellers
+              </Link>
             </div>
-          ) : (
-            <div className="card overflow-x-auto">
-              <table className="board-table">
-                <thead>
-                  <tr>
-                    <th>Address</th>
-                    <th>List</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {saved.map((row) => (
-                    <tr key={row.id}>
-                      <td>
-                        <Link href={`/listings/${row.listingId}`} className="font-semibold">
-                          {row.listing.address}
-                        </Link>
-                      </td>
-                      <td className="text-sm text-muted">Favorite seller</td>
+            {savedPane === "listings" ? (
+              saved.length === 0 ? (
+                <div className="card p-4">
+                  <p className="font-semibold">No saved listings</p>
+                  <p className="text-sm text-muted mt-1">
+                    Star a listing next to the price to keep it here.
+                  </p>
+                </div>
+              ) : (
+                <div className="card overflow-x-auto">
+                  <table className="board-table">
+                    <thead>
+                      <tr>
+                        <th>Address</th>
+                        <th>Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {saved.map((row) => (
+                        <tr key={row.id}>
+                          <td>
+                            <Link href={`/listings/${row.listingId}`} className="font-semibold">
+                              {row.listing.address}
+                            </Link>
+                          </td>
+                          <td className="whitespace-nowrap">{usd(row.listing.assignmentPrice)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            ) : savedSellers.length === 0 ? (
+              <div className="card p-4">
+                <p className="font-semibold">No saved sellers</p>
+                <p className="text-sm text-muted mt-1">Favorite a seller from a listing to keep them here.</p>
+              </div>
+            ) : (
+              <div className="card overflow-x-auto">
+                <table className="board-table">
+                  <thead>
+                    <tr>
+                      <th>Seller</th>
+                      <th></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
+                  </thead>
+                  <tbody>
+                    {savedSellers.map((row) => (
+                      <tr key={row.sellerId}>
+                        <td className="font-semibold">{row.name}</td>
+                        <td>
+                          <Link href={`/listings/${row.listingId}`} className="text-sm text-accent font-semibold">
+                            Open listing
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         ) : null}
 
         {tab === "hidden" ? (
