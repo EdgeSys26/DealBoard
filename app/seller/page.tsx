@@ -8,7 +8,8 @@ import {
   setListingStatusAction,
   tightenFloorAction,
 } from "@/lib/actions";
-import { acceptOfferAction, counterOfferAction } from "@/lib/deal-actions";
+import { acceptOfferAction, counterOfferAction, markSellerOffersSeenAction } from "@/lib/deal-actions";
+import { listingExpiresSoon } from "@/lib/seller-board";
 import { SellerNav } from "@/components/Nav";
 import { ClickRow } from "@/components/ClickRow";
 import { listingTitleDeposit } from "@/lib/deposit";
@@ -39,8 +40,10 @@ export default async function SellerHome({
   if (!user) redirect("/");
   if (user.role === "BUYER") redirect("/home");
   const tab = sellerTab((await searchParams).tab);
-  const { listings, meter, blasts, platformDeposit, levers } = await getSellerDashboard(
-    user.role === "ADMIN" ? "user_seller" : user.id,
+  const sellerId = user.role === "ADMIN" ? "user_seller" : user.id;
+  if (tab === "offers") await markSellerOffersSeenAction();
+  const { listings, meter, blasts, platformDeposit, levers, stats } = await getSellerDashboard(
+    sellerId,
   );
   const incoming = listings.flatMap((listing) =>
     listing.offers.map((offer) => ({ listing, offer })),
@@ -54,6 +57,24 @@ export default async function SellerHome({
   return (
     <div className="min-h-svh flex flex-col dash-page">
       <main className="flex-1 px-4 pb-6 space-y-2 pt-2">
+        <p className="stat-row">
+          <span>
+            For sale <b>{stats.forSale}</b>
+          </span>
+          <span>
+            On hold/pending <b>{stats.parked}</b>
+          </span>
+          <span>
+            Open offers <b>{stats.openOffers}</b>
+          </span>
+          <span>
+            Sold <b>{stats.sold}</b>
+          </span>
+          <span>
+            Next expiry{" "}
+            <b>{stats.nextExpiry ? closeDay(stats.nextExpiry) : "—"}</b>
+          </span>
+        </p>
         {tab === "listings" ? (
           <>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -121,6 +142,9 @@ export default async function SellerHome({
                           <td>
                             <Link href={`/listings/${listing.id}`} className="font-semibold">
                               {listing.address}
+                              {listingExpiresSoon(listing) ? (
+                                <span className="tab-dot red" title="Contract expires in 3 days or less" />
+                              ) : null}
                             </Link>
                           </td>
                           <td className="whitespace-nowrap">{usd(listing.assignmentPrice)}</td>
