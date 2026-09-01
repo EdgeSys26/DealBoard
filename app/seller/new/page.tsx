@@ -41,6 +41,12 @@ export default async function NewListingPage() {
               <option value="FULL_GUT">Full gut</option>
             </select>
           </label>
+          <label className="field">Offer floor % under asking
+            <input name="offerFloorPct" type="number" min={0} max={10} defaultValue={10} />
+          </label>
+          <p className="text-[11px] text-muted -mt-1">
+            Buyer cannot offer more than this percent below asking. Default 10%. You may tighten later.
+          </p>
           <label className="field">Our rehab guess<input name="rehabEstimate" type="number" defaultValue={15000} /></label>
           <label className="field">Known issues<textarea name="knownIssues" rows={3} /></label>
           <label className="flex gap-2 text-sm font-medium">

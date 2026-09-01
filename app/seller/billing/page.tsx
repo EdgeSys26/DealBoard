@@ -23,7 +23,10 @@ export default async function BillingPage() {
           <p className="text-sm text-muted">What would be billed this month</p>
           <p className="text-3xl font-semibold mt-1">{usd(meter.monthly)}</p>
           <p className="text-sm mt-2">
-            Plan {usd(meter.base)} includes 1 Active listing. Extra Active listings are {usd(meter.extraEach)} each.
+            ~{usd(meter.base)}/mo includes 1 Active listing. ~{usd(meter.extraEach)} per extra Active listing / month.
+          </p>
+          <p className="text-xs text-muted mt-2">
+            On hold, Pending / under contract, Assigned, and Expired are not billed. Only Active — what buyers can still take.
           </p>
         </section>
         <section className="card p-4 space-y-2">
