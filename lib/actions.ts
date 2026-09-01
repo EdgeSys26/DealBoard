@@ -15,6 +15,9 @@ import { refreshGradesForBox } from "./grade-listing";
 import { applyLifecycle, freezeThreads, onHoldCapDate, unfreezeThreads } from "./lifecycle";
 import { assertOfferFloor, tightenFloorPct } from "./offer-floor";
 import { HOLD_MS, NOBLESVILLE_SQUARE, type AlertMode, type WorkLevel } from "./types";
+import { clampListingDeposit, listingTitleDeposit } from "./deposit";
+import { getPlatformTitleDeposit } from "./settings";
+import { PHOTO_NEW } from "./listing-photos";
 
 export async function loginAction(formData: FormData) {
   await ensureDemoDb();
@@ -153,7 +156,6 @@ export async function placeOfferAction(formData: FormData) {
   await applyLifecycle();
   const listingId = String(formData.get("listingId"));
   const price = Number(formData.get("price"));
-  const deposit = Number(formData.get("deposit"));
   const closeDate = new Date(String(formData.get("closeDate")));
   const attachPof = String(formData.get("attachPof") || "") === "on";
   const rehabGuess = Number(formData.get("rehabGuess") || 0);
@@ -165,6 +167,7 @@ export async function placeOfferAction(formData: FormData) {
 
   const floor = assertOfferFloor(price, listing.assignmentPrice, listing.offerFloorPct);
   if (!floor.ok) return;
+  const deposit = listingTitleDeposit(listing, await getPlatformTitleDeposit());
 
   if (attachPof) {
     await prisma.user.update({
@@ -325,6 +328,19 @@ export async function tightenFloorAction(listingId: string, formData: FormData) 
   revalidatePath("/seller");
 }
 
+export async function setListingDepositAction(listingId: string, formData: FormData) {
+  const user = await requireUser();
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || listing.sellerId !== user.id) return;
+  const next = clampListingDeposit(Number(formData.get("titleDeposit")), await getPlatformTitleDeposit());
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { titleDeposit: next },
+  });
+  revalidatePath("/seller");
+  revalidatePath(`/listings/${listingId}`);
+}
+
 export async function favoriteAction(listingId: string, kind: "FAVORITE" | "DONT_SHOW") {
   const user = await requireUser();
   const existing = await prisma.favorite.findUnique({
@@ -474,7 +490,7 @@ export async function createListingAction(formData: FormData) {
   }
   const sellerId = user.role === "ADMIN" ? "user_seller" : user.id;
   const walkthrough = String(formData.get("hasWalkthrough")) === "on";
-  const photos = ["/listings/new-1.svg"];
+  const photos = [PHOTO_NEW];
   const assignmentPrice = Number(formData.get("assignmentPrice"));
   const sellerArv = Number(formData.get("sellerArv") || 0) || null;
   const liveAvm = Boolean(process.env.RENTCAST_API_KEY || process.env.REAPI_API_KEY);
@@ -516,6 +532,11 @@ export async function createListingAction(formData: FormData) {
       verified: String(formData.get("contractUploaded")) === "on",
       workLevel: String(formData.get("workLevel")),
       rehabEstimate: Number(formData.get("rehabEstimate") || 0),
+      offerFloorPct: Number(formData.get("offerFloorPct") || 10),
+      titleDeposit: clampListingDeposit(
+        Number(formData.get("titleDeposit")),
+        await getPlatformTitleDeposit(),
+      ),
       status: "ACTIVE",
       liveStartedAt: new Date(),
     },
