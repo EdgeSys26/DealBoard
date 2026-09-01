@@ -23,7 +23,9 @@ export default async function FavoritesPage() {
         {rows.map((r) => (
           <Link key={r.id} href={`/listings/${r.listingId}`} className="card p-4 block">
             <p className="font-semibold">{r.listing.address}</p>
-            <p className="text-xs text-muted">{r.kind === "FAVORITE" ? "Favorite" : "Don't show"}</p>
+            <p className="text-xs text-muted">
+              {r.kind === "FAVORITE" ? "Favorite seller — their A/B jump the line" : "Don't show"}
+            </p>
           </Link>
         ))}
       </main>

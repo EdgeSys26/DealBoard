@@ -27,7 +27,7 @@ export default async function HomePage() {
         <div className="card p-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold">
-              {looking ? "Feed is live" : "Pushes and home are paused"}
+              {looking ? "Looking — alerts on" : "Paused — no pushes"}
             </p>
             <p className="text-xs text-muted">
               {box
@@ -57,45 +57,44 @@ export default async function HomePage() {
           </Link>
         ) : null}
 
-        {looking &&
-          cards.map(({ listing, grade }) => {
-            const photos = JSON.parse(listing.photosJson) as string[];
-            const days = Math.max(0, daysBetween(new Date(), listing.contractExpiresAt));
-            const letter = (grade?.letter ?? "?") as Letter;
-            return (
-              <Link key={listing.id} href={`/listings/${listing.id}`} className="card overflow-hidden block">
-                <div className="relative h-44 bg-canvas">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photos[0]} alt="" className="h-full w-full object-cover" />
-                  <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
-                  {listing.verified ? (
-                    <span className="absolute top-2 right-2 text-[11px] font-bold bg-white/90 px-2 py-1 rounded-full">
-                      Verified
-                    </span>
-                  ) : null}
+        {cards.map(({ listing, grade }) => {
+          const photos = JSON.parse(listing.photosJson) as string[];
+          const days = Math.max(0, daysBetween(new Date(), listing.contractExpiresAt));
+          const letter = (grade?.letter ?? "?") as Letter;
+          return (
+            <Link key={listing.id} href={`/listings/${listing.id}`} className="card overflow-hidden block">
+              <div className="relative h-44 bg-canvas">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photos[0]} alt="" className="h-full w-full object-cover" />
+                <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
+                {listing.verified ? (
+                  <span className="absolute top-2 right-2 text-[11px] font-bold bg-white/90 px-2 py-1 rounded-full">
+                    Verified
+                  </span>
+                ) : null}
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between gap-2">
+                  <p className="font-semibold leading-tight">{listing.address}</p>
+                  <p className="font-semibold text-accent">{compactUsd(listing.assignmentPrice)}</p>
                 </div>
-                <div className="p-4">
-                  <div className="flex justify-between gap-2">
-                    <p className="font-semibold leading-tight">{listing.address}</p>
-                    <p className="font-semibold text-accent">{compactUsd(listing.assignmentPrice)}</p>
-                  </div>
-                  <p className="text-xs text-muted mt-1">
-                    {listing.city} {listing.zip} · {listing.beds}/{listing.baths} · {listing.sf} sf
-                  </p>
-                  <p className="text-xs text-muted mt-1">
-                    AVM {listing.platformAvm ? usd(listing.platformAvm) : "none"} · {days} days ·{" "}
-                    {WORK_LEVEL_LABEL[listing.workLevel as WorkLevel]} ·{" "}
-                    {BADGE_LABEL[listing.seller.badge as "GREEN" | "SILVER" | "GOLD"]}
-                  </p>
-                  {listing.id === "listing_pleasant" ? (
-                    <p className="text-xs font-semibold text-accent mt-2">2-hour hold on this card</p>
-                  ) : null}
-                </div>
-              </Link>
-            );
-          })}
+                <p className="text-xs text-muted mt-1">
+                  {listing.city} {listing.zip} · {listing.beds}/{listing.baths} · {listing.sf} sf
+                </p>
+                <p className="text-xs text-muted mt-1">
+                  AVM {listing.platformAvm ? usd(listing.platformAvm) : "none"} · {days} days ·{" "}
+                  {WORK_LEVEL_LABEL[listing.workLevel as WorkLevel]} ·{" "}
+                  {BADGE_LABEL[listing.seller.badge as "GREEN" | "SILVER" | "GOLD"]}
+                </p>
+                {listing.id === "listing_pleasant" ? (
+                  <p className="text-xs font-semibold text-accent mt-2">2-hour hold on this card</p>
+                ) : null}
+              </div>
+            </Link>
+          );
+        })}
 
-        {looking && cards.length === 0 ? (
+        {cards.length === 0 ? (
           <div className="card p-5">
             <p className="font-semibold">No A or B deals right now</p>
             <p className="text-sm text-muted mt-1">
