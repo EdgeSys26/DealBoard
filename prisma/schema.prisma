@@ -158,18 +158,20 @@ model Hold {
 }
 
 model Offer {
-  id          String   @id @default(cuid())
-  listingId   String
-  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  buyerId     String
-  buyer       User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
-  price       Int
-  deposit     Int
-  closeDate   DateTime
-  status      String   @default("PENDING")
-  pofAttached Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  titleFile   TitleFile?
+  id               String   @id @default(cuid())
+  listingId        String
+  listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId          String
+  buyer            User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  price            Int
+  deposit          Int
+  closeDate        DateTime
+  status           String   @default("PENDING")
+  pofAttached      Boolean  @default(false)
+  counterPrice     Int?
+  counterCloseDate DateTime?
+  createdAt        DateTime @default(now())
+  titleFile        TitleFile?
 }
 
 model TitleFile {

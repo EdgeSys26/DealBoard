@@ -27,18 +27,26 @@ export async function getHomeFeed(user: SessionUser) {
     where: { userId: user.id, kind: "FAVORITE" },
     include: { listing: { select: { sellerId: true } } },
   });
+  const hidden = await prisma.favorite.findMany({
+    where: { userId: user.id, kind: "HIDDEN" },
+    select: { listingId: true },
+  });
+  const hiddenIds = new Set(hidden.map((h) => h.listingId));
+  const myOffers = await prisma.offer.findMany({ where: { buyerId: user.id } });
+  const offerByListing = new Map(myOffers.map((o) => [o.listingId, o]));
   const favoriteSellerIds = new Set(favs.map((f) => f.listing.sellerId));
 
   const cards = [];
   for (const listing of listings) {
     if (listing.status !== "ACTIVE") continue;
     if (mutedIds.has(listing.sellerId)) continue;
+    if (hiddenIds.has(listing.id)) continue;
     let grade: GradeResult | null = null;
     if (box) {
       grade = await gradeAndCache(listing.id, box.id);
     }
     if (grade && !isHomeVisible(grade.letter)) continue;
-    cards.push({ listing, grade });
+    cards.push({ listing, grade, offer: offerByListing.get(listing.id) ?? null });
   }
 
   cards.sort((a, b) => {
@@ -63,11 +71,16 @@ export async function getBuyerBoard(user: SessionUser) {
     orderBy: { createdAt: "desc" },
   });
   const saved = await prisma.favorite.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, kind: "FAVORITE" },
     include: { listing: true },
     orderBy: { listingId: "asc" },
   });
-  return { ...feed, holds, offers, saved };
+  const hidden = await prisma.favorite.findMany({
+    where: { userId: user.id, kind: "HIDDEN" },
+    include: { listing: true },
+    orderBy: { listingId: "asc" },
+  });
+  return { ...feed, holds, offers, saved, hidden };
 }
 
 export async function getListingDetail(id: string, user: SessionUser) {
@@ -126,6 +139,7 @@ export async function getListingDetail(id: string, user: SessionUser) {
     leftoverNow,
     titleDeposit,
     photos: listingPhotos(listing),
+    isHidden: listing.favorites.some((f) => f.kind === "HIDDEN"),
     showSellerPhone: Boolean(accepted && accepted.buyerId === user.id),
     showWire: Boolean(listing.titleFile?.wireReleased && accepted),
   };

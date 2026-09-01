@@ -59,6 +59,12 @@ export async function ensureBoardSettings() {
     )
   `);
   await prisma.$executeRawUnsafe(`
+    ALTER TABLE "Offer" ADD COLUMN IF NOT EXISTS "counterPrice" INTEGER
+  `);
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "Offer" ADD COLUMN IF NOT EXISTS "counterCloseDate" TIMESTAMP
+  `);
+  await prisma.$executeRawUnsafe(`
     INSERT INTO "PlatformSetting" (
       "id", "titleDeposit", "includedActiveSlots", "extraListingDollars",
       "defaultOfferFloorPct", "onHoldMaxDays"

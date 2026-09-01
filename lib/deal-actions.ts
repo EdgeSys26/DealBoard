@@ -8,6 +8,37 @@ import { assertOfferFloor } from "./offer-floor";
 import { listingTitleDeposit } from "./deposit";
 import { getPlatformTitleDeposit } from "./settings";
 
+function touchOfferPaths(listingId: string) {
+  revalidatePath(`/listings/${listingId}`);
+  revalidatePath("/seller");
+  revalidatePath("/home");
+  revalidatePath("/deals");
+}
+
+async function paperAcceptedOffer(offerId: string, listingId: string) {
+  await prisma.offer.update({
+    where: { id: offerId },
+    data: { status: "ACCEPTED" },
+  });
+  await prisma.offer.updateMany({
+    where: { listingId, id: { not: offerId } },
+    data: { status: "REJECTED" },
+  });
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { status: "UNDER_CONTRACT" },
+  });
+  const title = await prisma.titleFile.findUnique({
+    where: { listingId },
+  });
+  if (title) {
+    await prisma.titleFile.update({
+      where: { id: title.id },
+      data: { offerId, wireReleased: true },
+    });
+  }
+}
+
 export async function placeOfferAction(formData: FormData) {
   const user = await requireUser();
   await applyLifecycle();
@@ -20,6 +51,11 @@ export async function placeOfferAction(formData: FormData) {
   if (!listing || listing.status !== "ACTIVE") {
     return;
   }
+
+  const existing = await prisma.offer.findFirst({
+    where: { listingId, buyerId: user.id, status: { in: ["PENDING", "COUNTERED", "ACCEPTED"] } },
+  });
+  if (existing) return;
 
   const floor = assertOfferFloor(price, listing.assignmentPrice, listing.offerFloorPct);
   if (!floor.ok) return;
@@ -54,8 +90,7 @@ export async function placeOfferAction(formData: FormData) {
     data: { released: true },
   });
 
-  revalidatePath(`/listings/${listingId}`);
-  revalidatePath("/deals");
+  touchOfferPaths(listingId);
 }
 
 export async function acceptOfferAction(offerId: string) {
@@ -67,32 +102,91 @@ export async function acceptOfferAction(offerId: string) {
   if (!offer || offer.listing.sellerId !== user.id) {
     return;
   }
-  await prisma.offer.update({
+  if (offer.status !== "PENDING") return;
+  await paperAcceptedOffer(offer.id, offer.listingId);
+  touchOfferPaths(offer.listingId);
+}
+
+export async function counterOfferAction(formData: FormData) {
+  const user = await requireUser();
+  const offerId = String(formData.get("offerId"));
+  const price = Number(formData.get("price"));
+  const closeDate = new Date(String(formData.get("closeDate")));
+  const offer = await prisma.offer.findUnique({
     where: { id: offerId },
-    data: { status: "ACCEPTED" },
+    include: { listing: true },
   });
-  await prisma.offer.updateMany({
-    where: { listingId: offer.listingId, id: { not: offerId } },
-    data: { status: "REJECTED" },
+  if (!offer || offer.listing.sellerId !== user.id) return;
+  if (offer.status !== "PENDING" || offer.counterPrice != null) return;
+  if (Number.isNaN(closeDate.getTime())) return;
+  const floor = assertOfferFloor(price, offer.listing.assignmentPrice, offer.listing.offerFloorPct);
+  if (!floor.ok) return;
+  await prisma.offer.update({
+    where: { id: offer.id },
+    data: {
+      status: "COUNTERED",
+      counterPrice: price,
+      counterCloseDate: closeDate,
+    },
   });
-  await prisma.listing.update({
-    where: { id: offer.listingId },
-    data: { status: "UNDER_CONTRACT" },
-  });
+  touchOfferPaths(offer.listingId);
+}
 
-  const title = await prisma.titleFile.findUnique({
-    where: { listingId: offer.listingId },
+export async function acceptCounterAction(offerId: string) {
+  const user = await requireUser();
+  const offer = await prisma.offer.findUnique({
+    where: { id: offerId },
+    include: { listing: true },
   });
-  if (title) {
-    await prisma.titleFile.update({
-      where: { id: title.id },
-      data: { offerId: offer.id, wireReleased: true },
-    });
+  if (!offer || offer.buyerId !== user.id) return;
+  if (offer.status !== "COUNTERED" || offer.counterPrice == null || !offer.counterCloseDate) return;
+  await prisma.offer.update({
+    where: { id: offer.id },
+    data: {
+      price: offer.counterPrice,
+      closeDate: offer.counterCloseDate,
+    },
+  });
+  await paperAcceptedOffer(offer.id, offer.listingId);
+  touchOfferPaths(offer.listingId);
+}
+
+export async function declineCounterAction(offerId: string) {
+  const user = await requireUser();
+  const offer = await prisma.offer.findUnique({ where: { id: offerId } });
+  if (!offer || offer.buyerId !== user.id) return;
+  if (offer.status !== "COUNTERED") return;
+  await prisma.offer.update({
+    where: { id: offer.id },
+    data: { status: "DECLINED" },
+  });
+  touchOfferPaths(offer.listingId);
+}
+
+export async function hideListingAction(listingId: string) {
+  const user = await requireUser();
+  const existing = await prisma.favorite.findUnique({
+    where: { userId_listingId: { userId: user.id, listingId } },
+  });
+  if (existing?.kind === "HIDDEN") return;
+  if (existing) {
+    await prisma.favorite.update({ where: { id: existing.id }, data: { kind: "HIDDEN" } });
+  } else {
+    await prisma.favorite.create({ data: { userId: user.id, listingId, kind: "HIDDEN" } });
   }
+  revalidatePath("/home");
+  revalidatePath(`/listings/${listingId}`);
+}
 
-  revalidatePath("/seller");
-  revalidatePath(`/listings/${offer.listingId}`);
-  revalidatePath("/deals");
+export async function unhideListingAction(listingId: string) {
+  const user = await requireUser();
+  const existing = await prisma.favorite.findUnique({
+    where: { userId_listingId: { userId: user.id, listingId } },
+  });
+  if (!existing || existing.kind !== "HIDDEN") return;
+  await prisma.favorite.delete({ where: { id: existing.id } });
+  revalidatePath("/home");
+  revalidatePath(`/listings/${listingId}`);
 }
 
 export async function favoriteAction(listingId: string, kind: "FAVORITE" | "DONT_SHOW") {
