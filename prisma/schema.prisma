@@ -96,6 +96,7 @@ model Listing {
   rehabEstimate         Int
   status                String   @default("ACTIVE")
   offerFloorPct         Float    @default(10)
+  titleDeposit          Int      @default(2500)
   liveStartedAt         DateTime
   onHoldUntil           DateTime?
   views                 Int      @default(0)
@@ -273,6 +274,11 @@ model Message {
   body      String
   system    Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model PlatformSetting {
+  id           String @id
+  titleDeposit Int    @default(2500)
 }
 
 model WorkAgain {
