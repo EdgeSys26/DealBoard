@@ -8,7 +8,7 @@ export function DashTabs({
   active: string;
 }) {
   return (
-    <nav className="dash-tabs px-4" aria-label="Section">
+    <nav className="dash-tabs" aria-label="Section">
       {items.map((item) => (
         <Link
           key={item.id}

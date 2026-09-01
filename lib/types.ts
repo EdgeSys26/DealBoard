@@ -103,6 +103,7 @@ export const HOLD_MS = 2 * 60 * 60 * 1000;
 export const MAX_ON_HOLD_DAYS = 7;
 export const MAX_LIVE_DAYS = 14;
 export const DEFAULT_OFFER_FLOOR_PCT = 10;
+export const DEFAULT_TITLE_DEPOSIT = 2500;
 export const BILLING_BASE = 249;
 export const BILLING_EXTRA = 49;
 export const INCLUDED_ACTIVE_SLOTS = 1;
