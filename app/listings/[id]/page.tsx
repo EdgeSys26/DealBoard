@@ -39,7 +39,7 @@ export default async function ListingPage({
     );
   }
 
-  const { listing, grade, myHold, myOffer, accepted, floor, leftoverNow, photos, showSellerPhone, showWire } = data;
+  const { listing, grade, myHold, myOffer, accepted, floor, leftoverNow, titleDeposit, photos, showSellerPhone, showWire } = data;
   const days = Math.max(0, daysBetween(new Date(), listing.contractExpiresAt));
   const letter = grade?.letter ?? "—";
   const otherHold = listing.holds.find((h) => h.buyerId !== user.id);
@@ -167,21 +167,22 @@ export default async function ListingPage({
               <form action={placeOfferAction} className="space-y-3">
                 <input type="hidden" name="listingId" value={listing.id} />
                 <input type="hidden" name="rehabGuess" value={listing.rehabEstimate} />
-                <label className="field">
-                  Price
-                  <input name="price" type="number" defaultValue={listing.assignmentPrice} min={floor} required />
-                </label>
-                <label className="field">
-                  Deposit to title
-                  <input name="deposit" type="number" defaultValue={2500} required />
-                </label>
-                <label className="field">
-                  Close date
-                  <input name="closeDate" type="date" defaultValue="2026-09-18" required />
-                </label>
+                <div className="offer-row">
+                  <label className="field">
+                    Price
+                    <input name="price" type="number" defaultValue={listing.assignmentPrice} min={floor} required />
+                  </label>
+                  <label className="field">
+                    Close date
+                    <input name="closeDate" type="date" defaultValue="2026-09-18" required />
+                  </label>
+                </div>
+                <p className="floor-copy text-sm font-semibold">
+                  Deposit to title: {usd(titleDeposit)}
+                </p>
                 {!user.pofOnFile || !user.entityOnFile || !user.w9OnFile ? (
                   <label className="flex items-start gap-2 text-sm font-medium text-ink">
-                    <input name="attachPof" type="checkbox" defaultChecked className="mt-1 w-auto" />
+                    <input name="attachPof" type="checkbox" defaultChecked className="w-auto" />
                     First offer: attach vault POF, entity papers, and W-9 (demo files).
                   </label>
                 ) : (
