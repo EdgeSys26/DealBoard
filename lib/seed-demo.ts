@@ -3,6 +3,7 @@ import type { PrismaClient } from "@prisma/client";
 import { gradeListing } from "./grade";
 import { NOBLESVILLE_SQUARE } from "./types";
 import type { Badge, WorkLevel } from "./types";
+import { photosForSeed } from "./listing-photos";
 
 const DEMO_PASSWORD = "demo";
 
@@ -117,12 +118,8 @@ export async function seedDemo(prisma: PrismaClient) {
       access: "Supra lockbox, code in thread after accept",
       contractExpiresAt: new Date("2026-09-10T17:00:00-04:00"),
       knownIssues: "Roof is original (2004). Rear deck boards soft. HVAC runs.",
-      photosJson: JSON.stringify([
-        "/listings/pleasant-1.svg",
-        "/listings/pleasant-2.svg",
-        "/listings/pleasant-3.svg",
-        "/listings/pleasant-4.svg",
-      ]),
+      photosJson: JSON.stringify(photosForSeed("pleasant")),
+      titleDeposit: 2500,
       walkthroughUrl: "/walkthrough/pleasant.mp4",
       hasWalkthrough: true,
       contractUploaded: true,
@@ -159,11 +156,8 @@ export async function seedDemo(prisma: PrismaClient) {
       access: "Showing window 10a–2p with 2-hour notice",
       contractExpiresAt: new Date("2026-09-05T17:00:00-04:00"),
       knownIssues: "Kitchen is original oak. One bath needs surround.",
-      photosJson: JSON.stringify([
-        "/listings/cicero-1.svg",
-        "/listings/cicero-2.svg",
-        "/listings/cicero-3.svg",
-      ]),
+      photosJson: JSON.stringify(photosForSeed("cicero")),
+      titleDeposit: 2500,
       walkthroughUrl: "/walkthrough/cicero.mp4",
       hasWalkthrough: true,
       contractUploaded: true,
@@ -200,7 +194,8 @@ export async function seedDemo(prisma: PrismaClient) {
       access: "Weekend only",
       contractExpiresAt: new Date("2026-09-12T17:00:00-04:00"),
       knownIssues: "Cosmetic only. HOA $180/mo.",
-      photosJson: JSON.stringify(["/listings/harbour-1.svg", "/listings/harbour-2.svg"]),
+      photosJson: JSON.stringify(photosForSeed("harbour")),
+      titleDeposit: 2500,
       hasWalkthrough: false,
       contractUploaded: false,
       verified: false,
