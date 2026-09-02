@@ -105,6 +105,80 @@ body {
   background: color-mix(in srgb, var(--accent) 5%, var(--card));
 }
 
+.listings-table th,
+.listings-table td {
+  padding: 6px 8px;
+}
+
+.listing-thumb {
+  display: block;
+  width: 44px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--canvas);
+}
+
+.listing-days,
+.listing-spread {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.listing-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.listing-counter-chip {
+  margin-top: 0;
+}
+
+.listing-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.listings-table input[type="number"] {
+  width: 56px;
+  padding: 5px 6px;
+  font-size: 13px;
+}
+
+.listings-table input[name="titleDeposit"] {
+  width: 72px;
+}
+
+.listing-save {
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  width: auto;
+  background: #C5CAD3;
+  color: #fff;
+}
+
+.listing-save:disabled {
+  background: #C5CAD3;
+  color: #fff;
+  cursor: default;
+}
+
+.listing-save:not(:disabled) {
+  background: #1A4DFF;
+  color: #fff;
+}
+
 .board-table tr.offer-bid-row td {
   padding: 16px 12px;
 }

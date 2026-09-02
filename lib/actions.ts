@@ -347,6 +347,28 @@ export async function setListingDepositAction(listingId: string, formData: FormD
   revalidatePath(`/listings/${listingId}`);
 }
 
+export async function saveListingRowAction(listingId: string, formData: FormData) {
+  const user = await requireUser();
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || (listing.sellerId !== user.id && user.role !== "ADMIN")) return;
+  const levers = await getBoardLevers();
+  const nextFloor = tightenFloorPct(
+    listing.offerFloorPct,
+    Number(formData.get("offerFloorPct")),
+    levers.defaultOfferFloorPct,
+  );
+  const nextDeposit = clampListingDeposit(
+    Number(formData.get("titleDeposit")),
+    await getPlatformTitleDeposit(),
+  );
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { offerFloorPct: nextFloor, titleDeposit: nextDeposit },
+  });
+  revalidatePath("/seller");
+  revalidatePath(`/listings/${listingId}`);
+}
+
 export async function favoriteAction(listingId: string, kind: "FAVORITE" | "DONT_SHOW") {
   const user = await requireUser();
   const existing = await prisma.favorite.findUnique({

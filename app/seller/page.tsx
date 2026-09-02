@@ -2,23 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getSellerDashboard } from "@/lib/queries";
-import {
-  sendBlastAction,
-  setListingDepositAction,
-  setListingStatusAction,
-  tightenFloorAction,
-} from "@/lib/actions";
+import { sendBlastAction } from "@/lib/actions";
 import { acceptOfferAction, counterOfferAction, markSellerOffersSeenAction } from "@/lib/deal-actions";
-import { listingExpiresSoon } from "@/lib/seller-board";
 import { SellerNav } from "@/components/Nav";
-import { ClickRow } from "@/components/ClickRow";
-import { listingTitleDeposit } from "@/lib/deposit";
+import { SellerListingRow } from "@/components/SellerListingRow";
 import { bidVsAsking } from "@/lib/bid-tone";
 import { isoDay, offerCardStatus } from "@/lib/offer-status";
 import { minOfferPrice } from "@/lib/offer-floor";
 import { usd } from "@/lib/money";
 import { formatSlot } from "@/lib/dates";
-import { STATUS_LABEL } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -122,103 +114,30 @@ export default async function SellerHome({
               </div>
             ) : (
               <div className="card overflow-x-auto">
-                <table className="board-table">
+                <table className="board-table listings-table">
                   <thead>
                     <tr>
+                      <th></th>
                       <th>Address</th>
-                      <th>Price</th>
+                      <th>Contract</th>
+                      <th>Asking</th>
                       <th>Status</th>
-                      <th>Offer floor</th>
-                      <th>Title deposit</th>
+                      <th>Floor</th>
+                      <th>Deposit</th>
                       <th>Activity</th>
                       <th>Verified</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {listings.map((listing) => {
-                      const deposit = listingTitleDeposit(listing, platformDeposit);
-                      return (
-                        <ClickRow key={listing.id} href={`/listings/${listing.id}`}>
-                          <td>
-                            <Link href={`/listings/${listing.id}`} className="font-semibold">
-                              {listing.address}
-                              {listingExpiresSoon(listing) ? (
-                                <span className="tab-dot red" title="Contract expires in 3 days or less" />
-                              ) : null}
-                            </Link>
-                          </td>
-                          <td className="whitespace-nowrap">{usd(listing.assignmentPrice)}</td>
-                          <td>
-                            <div className="flex flex-wrap gap-1">
-                              {(["ACTIVE", "ON_HOLD", "UNDER_CONTRACT"] as const).map((status) => (
-                                <form
-                                  key={status}
-                                  action={setListingStatusAction.bind(null, listing.id, status)}
-                                >
-                                  <button
-                                    className="chip justify-center"
-                                    data-on={listing.status === status ? "true" : "false"}
-                                    type="submit"
-                                  >
-                                    {STATUS_LABEL[status]}
-                                  </button>
-                                </form>
-                              ))}
-                            </div>
-                          </td>
-                          <td>
-                            <div className="flex items-center gap-2">
-                              <span className="floor-copy text-sm">
-                                Offer floor: {listing.offerFloorPct}% under
-                              </span>
-                              <form
-                                action={tightenFloorAction.bind(null, listing.id)}
-                                className="flex items-center gap-1"
-                              >
-                                <input
-                                  name="offerFloorPct"
-                                  type="number"
-                                  min={0}
-                                  max={levers.defaultOfferFloorPct}
-                                  step={1}
-                                  defaultValue={listing.offerFloorPct}
-                                  className="w-14 px-2 py-1 text-sm"
-                                  aria-label="Offer floor percent under"
-                                />
-                                <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
-                                  Set
-                                </button>
-                              </form>
-                            </div>
-                          </td>
-                          <td>
-                            <form
-                              action={setListingDepositAction.bind(null, listing.id)}
-                              className="flex items-center gap-1"
-                            >
-                              <input
-                                name="titleDeposit"
-                                type="number"
-                                min={platformDeposit}
-                                step={100}
-                                defaultValue={deposit}
-                                className="w-24 px-2 py-1 text-sm"
-                                aria-label="Title deposit"
-                              />
-                              <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
-                                Set
-                              </button>
-                            </form>
-                          </td>
-                          <td className="whitespace-nowrap text-sm text-muted">
-                            {listing.views}/{listing.holds.length}/{listing.offers.length}
-                          </td>
-                          <td className="whitespace-nowrap text-sm">
-                            {listing.verified ? "Verified" : "Unverified"}
-                          </td>
-                        </ClickRow>
-                      );
-                    })}
+                    {listings.map((listing) => (
+                      <SellerListingRow
+                        key={listing.id}
+                        listing={listing}
+                        platformDeposit={platformDeposit}
+                        maxFloor={levers.defaultOfferFloorPct}
+                      />
+                    ))}
                   </tbody>
                 </table>
               </div>
