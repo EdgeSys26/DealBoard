@@ -9,6 +9,7 @@ import {
   freezeUserAction,
   killListingAdminAction,
   setPlatformLeversAction,
+  strikeUserAction,
   unfreezeUserAction,
 } from "@/lib/admin-actions";
 import { usd } from "@/lib/money";
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
 
 function adminTab(raw: string | undefined) {
   if (raw === "people" || raw === "listings" || raw === "billing" || raw === "queue") return raw;
-  return "levers";
+  return "dashboard";
 }
 
 function peopleWho(raw: string | undefined) {
@@ -55,8 +56,18 @@ export default async function AdminPage({
   const params = await searchParams;
   const tab = adminTab(params.tab);
   const who = peopleWho(params.who);
-  const { reports, users, listings, muteRates, fallthroughs, levers, adjustments, sellerBilling } =
-    await getAdminData();
+  const {
+    reports,
+    users,
+    listings,
+    muteRates,
+    fallthroughs,
+    levers,
+    adjustments,
+    sellerBilling,
+    tiles,
+    soldDeals,
+  } = await getAdminData();
   const muteAlerts = muteRates.filter((row) => row.alert);
   const openReports = reports.filter((r) => r.status === "OPEN");
 
@@ -72,71 +83,226 @@ export default async function AdminPage({
   return (
     <div className="min-h-svh flex flex-col dash-page">
       <main className="flex-1 px-4 pb-8 space-y-2 pt-2">
-        {tab === "levers" ? (
-          <section className="card px-4 py-4 space-y-3">
-            <p className="text-sm font-semibold tracking-tight">Levers</p>
-            <p className="text-xs text-muted">
-              Platform defaults. Title deposit is a dollar amount, not a percent of price.
-            </p>
-            <form action={setPlatformLeversAction} className="space-y-3">
-              <div className="lever-grid">
-                <label className="field">
-                  Title deposit
-                  <input
-                    name="titleDeposit"
-                    type="number"
-                    min={1}
-                    step={100}
-                    defaultValue={levers.titleDeposit}
-                  />
-                </label>
-                <label className="field">
-                  Included Active slots
-                  <input
-                    name="includedActiveSlots"
-                    type="number"
-                    min={1}
-                    step={1}
-                    defaultValue={levers.includedActiveSlots}
-                  />
-                </label>
-                <label className="field">
-                  Extra listing $
-                  <input
-                    name="extraListingDollars"
-                    type="number"
-                    min={0}
-                    step={1}
-                    defaultValue={levers.extraListingDollars}
-                  />
-                </label>
-                <label className="field">
-                  Default offer-floor %
-                  <input
-                    name="defaultOfferFloorPct"
-                    type="number"
-                    min={0}
-                    max={50}
-                    step={1}
-                    defaultValue={levers.defaultOfferFloorPct}
-                  />
-                </label>
-                <label className="field">
-                  On-hold max days
-                  <input
-                    name="onHoldMaxDays"
-                    type="number"
-                    min={1}
-                    step={1}
-                    defaultValue={levers.onHoldMaxDays}
-                  />
-                </label>
-              </div>
-              <button className="btn-secondary w-auto px-3 py-2 text-sm" type="submit">
-                Save
-              </button>
-            </form>
-          </section>
+        {tab === "dashboard" ? (
+          <>
+            <div className="admin-tiles">
+              <section className="admin-tile wide">
+                <p className="k">Listings</p>
+                <div className="mini">
+                  <span>
+                    Active <b>{tiles.active}</b>
+                  </span>
+                  <span>
+                    Hold <b>{tiles.hold}</b>
+                  </span>
+                  <span>
+                    Pending <b>{tiles.pending}</b>
+                  </span>
+                  <span>
+                    Sold <b>{tiles.sold}</b>
+                  </span>
+                </div>
+              </section>
+              <section className="admin-tile">
+                <p className="k">Buyers</p>
+                <p className="v">{tiles.buyers}</p>
+              </section>
+              <section className="admin-tile">
+                <p className="k">Sellers</p>
+                <p className="v">{tiles.sellers}</p>
+              </section>
+              <section className="admin-tile">
+                <p className="k">Open offers</p>
+                <p className="v">{tiles.openOffers}</p>
+              </section>
+              <section className="admin-tile">
+                <p className="k">Expiring ≤3 days</p>
+                <p className="v">{tiles.expiring}</p>
+              </section>
+              <section className="admin-tile wide">
+                <p className="k">Queue</p>
+                <div className="mini">
+                  <span>
+                    Reports <b>{tiles.reports}</b>
+                  </span>
+                  <span>
+                    Fall-throughs <b>{tiles.fallThroughs}</b>
+                  </span>
+                  <span>
+                    Mute alerts <b>{tiles.muteAlerts}</b>
+                  </span>
+                </div>
+              </section>
+            </div>
+
+            <section className="card px-4 py-3 space-y-2 settings-card">
+              <p className="text-sm font-semibold tracking-tight">Settings</p>
+              <p className="text-xs text-muted">
+                Platform defaults. Title deposit is a dollar amount, not a percent of price.
+              </p>
+              <form action={setPlatformLeversAction} className="space-y-2">
+                <div className="lever-grid">
+                  <label className="field">
+                    Title deposit
+                    <input
+                      name="titleDeposit"
+                      type="number"
+                      min={1}
+                      step={100}
+                      defaultValue={levers.titleDeposit}
+                    />
+                  </label>
+                  <label className="field">
+                    Included Active slots
+                    <input
+                      name="includedActiveSlots"
+                      type="number"
+                      min={1}
+                      step={1}
+                      defaultValue={levers.includedActiveSlots}
+                    />
+                  </label>
+                  <label className="field">
+                    Extra listing $
+                    <input
+                      name="extraListingDollars"
+                      type="number"
+                      min={0}
+                      step={1}
+                      defaultValue={levers.extraListingDollars}
+                    />
+                  </label>
+                  <label className="field">
+                    Default offer-floor %
+                    <input
+                      name="defaultOfferFloorPct"
+                      type="number"
+                      min={0}
+                      max={50}
+                      step={1}
+                      defaultValue={levers.defaultOfferFloorPct}
+                    />
+                  </label>
+                  <label className="field">
+                    On-hold max days
+                    <input
+                      name="onHoldMaxDays"
+                      type="number"
+                      min={1}
+                      step={1}
+                      defaultValue={levers.onHoldMaxDays}
+                    />
+                  </label>
+                </div>
+                <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
+                  Save
+                </button>
+              </form>
+            </section>
+
+            <section className="card overflow-x-auto">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted px-3 pt-3">
+                Sold
+              </p>
+              {soldDeals.length === 0 ? (
+                <p className="text-sm text-muted px-3 py-3">No funded or closed deals yet.</p>
+              ) : (
+                <table className="board-table">
+                  <thead>
+                    <tr>
+                      <th>Address</th>
+                      <th>Seller</th>
+                      <th>Buyer</th>
+                      <th>Price</th>
+                      <th>Date</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {soldDeals.map((deal) => (
+                      <tr key={deal.id}>
+                        <td className="font-semibold">{deal.address}</td>
+                        <td className="whitespace-nowrap">{deal.sellerName}</td>
+                        <td className="whitespace-nowrap">{deal.buyerName}</td>
+                        <td className="whitespace-nowrap">{usd(deal.price)}</td>
+                        <td className="whitespace-nowrap text-sm text-muted">
+                          {deal.closedAt.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </td>
+                        <td>
+                          <div className="sold-actions">
+                            <Link
+                              href={`/listings/${deal.id}`}
+                              className="btn-secondary w-auto px-2 py-1 text-xs"
+                            >
+                              Open
+                            </Link>
+                            <details className="sold-menu">
+                              <summary className="btn-secondary w-auto px-2 py-1 text-xs">
+                                Strike
+                              </summary>
+                              <div className="sold-menu-panel">
+                                <form action={strikeUserAction}>
+                                  <input type="hidden" name="userId" value={deal.sellerId} />
+                                  <input type="hidden" name="reason" value="Sold deal review" />
+                                  <button className="btn-secondary" type="submit">
+                                    Seller
+                                  </button>
+                                </form>
+                                {deal.buyerId ? (
+                                  <form action={strikeUserAction}>
+                                    <input type="hidden" name="userId" value={deal.buyerId} />
+                                    <input type="hidden" name="reason" value="Sold deal review" />
+                                    <button className="btn-secondary" type="submit">
+                                      Buyer
+                                    </button>
+                                  </form>
+                                ) : null}
+                              </div>
+                            </details>
+                            <details className="sold-menu">
+                              <summary className="btn-secondary w-auto px-2 py-1 text-xs">
+                                Blacklist
+                              </summary>
+                              <div className="sold-menu-panel">
+                                <form action={blacklistAction}>
+                                  <input type="hidden" name="userId" value={deal.sellerId} />
+                                  <input type="hidden" name="note" value="Sold deal review" />
+                                  <button
+                                    className="btn-secondary"
+                                    type="submit"
+                                    disabled={deal.sellerBlocked}
+                                  >
+                                    Seller
+                                  </button>
+                                </form>
+                                {deal.buyerId ? (
+                                  <form action={blacklistAction}>
+                                    <input type="hidden" name="userId" value={deal.buyerId} />
+                                    <input type="hidden" name="note" value="Sold deal review" />
+                                    <button
+                                      className="btn-secondary"
+                                      type="submit"
+                                      disabled={deal.buyerBlocked}
+                                    >
+                                      Buyer
+                                    </button>
+                                  </form>
+                                ) : null}
+                              </div>
+                            </details>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </section>
+          </>
         ) : null}
 
         {tab === "people" ? (
@@ -305,60 +471,53 @@ export default async function AdminPage({
               </div>
             ) : (
               <div className="card overflow-x-auto">
-                <table className="board-table">
-                  <thead>
-                    <tr>
-                      <th>Seller</th>
-                      <th>Active slots</th>
-                      <th>Monthly</th>
-                      <th>Adjust this month</th>
-                      <th>Net</th>
-                      <th>Manual adjust</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sellerBilling.map((row) => (
-                      <tr key={row.seller.id}>
-                        <td className="font-semibold">{row.seller.name}</td>
-                        <td>
-                          {row.meter.activeCount} Active · {row.meter.included} included
-                        </td>
-                        <td className="whitespace-nowrap">{usd(row.meter.monthly)}</td>
-                        <td className="whitespace-nowrap">
+                <div className="bill-head">
+                  <span>Seller</span>
+                  <span>Slots</span>
+                  <span>Monthly</span>
+                  <span>Adj</span>
+                  <span>Net</span>
+                  <span />
+                </div>
+                <div className="bill-list">
+                  {sellerBilling.map((row) => (
+                    <details key={row.seller.id} className="bill-row">
+                      <summary>
+                        <span className="font-semibold">{row.seller.name}</span>
+                        <span className="text-muted">
+                          {row.meter.activeCount} Active · {row.meter.included} in
+                        </span>
+                        <span className="whitespace-nowrap">{usd(row.meter.monthly)}</span>
+                        <span className="whitespace-nowrap">
                           {row.adjSum === 0 ? "—" : usd(row.adjSum)}
-                        </td>
-                        <td className="whitespace-nowrap font-semibold">{usd(row.net)}</td>
-                        <td>
-                          <form action={addBillingAdjustmentAction} className="flex flex-wrap items-end gap-1">
-                            <input type="hidden" name="sellerId" value={row.seller.id} />
-                            <input
-                              name="amount"
-                              type="number"
-                              min={1}
-                              step={1}
-                              placeholder="$"
-                              className="w-20 px-2 py-1 text-sm"
-                              required
-                            />
-                            <select name="sign" className="w-16 px-1 py-1 text-sm" defaultValue="+">
-                              <option value="+">+</option>
-                              <option value="-">−</option>
-                            </select>
-                            <input
-                              name="reason"
-                              placeholder="Reason"
-                              className="w-36 px-2 py-1 text-sm"
-                              required
-                            />
-                            <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
-                              Add
-                            </button>
-                          </form>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </span>
+                        <span className="whitespace-nowrap font-semibold">{usd(row.net)}</span>
+                        <span className="bill-chevron">▸</span>
+                      </summary>
+                      <div className="bill-panel">
+                        <form action={addBillingAdjustmentAction}>
+                          <input type="hidden" name="sellerId" value={row.seller.id} />
+                          <input
+                            name="amount"
+                            type="number"
+                            min={1}
+                            step={1}
+                            placeholder="$"
+                            required
+                          />
+                          <select name="sign" defaultValue="+">
+                            <option value="+">+</option>
+                            <option value="-">−</option>
+                          </select>
+                          <input name="reason" placeholder="Reason" required />
+                          <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
+                            Add
+                          </button>
+                        </form>
+                      </div>
+                    </details>
+                  ))}
+                </div>
               </div>
             )}
             <section className="card overflow-x-auto">

@@ -310,7 +310,54 @@ export async function getAdminData() {
         net: meter.monthly + adjSum,
       };
     });
-  return { reports, users, listings, muteRates, fallthroughs, levers, adjustments, sellerBilling };
+  const muteAlerts = muteRates.filter((row) => row.alert);
+  const openReports = reports.filter((r) => r.status === "OPEN");
+  const tiles = {
+    active: listings.filter((l) => l.status === "ACTIVE").length,
+    hold: listings.filter((l) => l.status === "ON_HOLD").length,
+    pending: listings.filter((l) => l.status === "UNDER_CONTRACT").length,
+    sold: listings.filter((l) => l.status === "ASSIGNED").length,
+    buyers: users.filter((u) => u.role === "BUYER").length,
+    sellers: users.filter((u) => u.role === "SELLER").length,
+    openOffers: listings.reduce(
+      (n, l) => n + l.offers.filter((o) => o.status === "PENDING" || o.status === "COUNTERED").length,
+      0,
+    ),
+    reports: openReports.length,
+    fallThroughs: fallthroughs.length,
+    muteAlerts: muteAlerts.length,
+    expiring: listings.filter((l) => listingExpiresSoon(l)).length,
+  };
+  const soldDeals = listings
+    .filter((l) => l.status === "ASSIGNED")
+    .map((l) => {
+      const accepted = l.offers.find((o) => o.status === "ACCEPTED");
+      return {
+        id: l.id,
+        address: l.address,
+        sellerId: l.seller.id,
+        sellerName: l.seller.name,
+        sellerBlocked: l.seller.blacklisted,
+        buyerId: accepted?.buyer.id ?? null,
+        buyerName: accepted?.buyer.name ?? "—",
+        buyerBlocked: accepted?.buyer.blacklisted ?? false,
+        price: accepted?.price ?? l.assignmentPrice,
+        closedAt: accepted?.updatedAt ?? accepted?.createdAt ?? l.createdAt,
+      };
+    })
+    .sort((a, b) => b.closedAt.getTime() - a.closedAt.getTime());
+  return {
+    reports,
+    users,
+    listings,
+    muteRates,
+    fallthroughs,
+    levers,
+    adjustments,
+    sellerBilling,
+    tiles,
+    soldDeals,
+  };
 }
 
 export function personStats(user: {
