@@ -7,6 +7,7 @@ import { listingTitleDeposit } from "./deposit";
 import { listingPhotos } from "./listing-photos";
 import { getBoardLevers, getPlatformTitleDeposit, type BoardLevers } from "./settings";
 import { isUnseenSellerOffer, listingExpiresSoon, sellerBoardStats } from "./seller-board";
+import { isListingHot } from "./hot";
 import { BILLING_BASE, type Letter } from "./types";
 import type { SessionUser } from "./auth";
 import type { GradeResult } from "./types";
@@ -63,6 +64,9 @@ export async function getHomeFeed(user: SessionUser, view: FeedView = "ab") {
   }
 
   cards.sort((a, b) => {
+    const aHot = isListingHot(a.listing) ? 1 : 0;
+    const bHot = isListingHot(b.listing) ? 1 : 0;
+    if (aHot !== bHot) return bHot - aHot;
     const aFav = favoriteSellerIds.has(a.listing.sellerId) ? 1 : 0;
     const bFav = favoriteSellerIds.has(b.listing.sellerId) ? 1 : 0;
     if (aFav !== bFav) return bFav - aFav;
@@ -195,6 +199,7 @@ export async function getSellerDashboard(userId: string) {
       holds: { where: { released: false, expiresAt: { gt: new Date() } } },
       offers: { include: { buyer: true }, orderBy: { createdAt: "desc" } },
       titleSlots: true,
+      titleFile: { select: { id: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -206,7 +211,7 @@ export async function getSellerDashboard(userId: string) {
   });
   const seller = await prisma.user.findUnique({
     where: { id: userId },
-    select: { sellerOffersSeenAt: true },
+    select: { sellerOffersSeenAt: true, badge: true, strikes: { select: { id: true } } },
   });
   const seenAt = seller?.sellerOffersSeenAt ?? null;
   const newOfferCount = listings.reduce(
@@ -223,6 +228,8 @@ export async function getSellerDashboard(userId: string) {
     stats: sellerBoardStats(listings),
     newOfferCount,
     expiringIds,
+    sellerBadge: seller?.badge ?? "GREEN",
+    strikeCount: seller?.strikes.length ?? 0,
   };
 }
 
