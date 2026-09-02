@@ -117,31 +117,30 @@ export default async function ListingPage({
               <GradeBars grade={grade} />
             </section>
           ) : null}
+          <section className="card listing-facts">
+            <Row label="Seller ARV" value={`${listing.sellerArv ? usd(listing.sellerArv) : "—"} (seller's)`} />
+            <Row label="Seller repairs" value={usd(listing.sellerRepairs)} />
+            <Row label="Our rehab guess" value={usd(listing.rehabEstimate)} />
+            <Row label="Original contract" value={usd(listing.originalContractPrice)} />
+            <Row label="Occupancy" value={listing.occupancy} />
+            <Row label="Access" value={listing.access} />
+            <Row
+              label="Wholesaler"
+              value={
+                showSellerPhone
+                  ? `${listing.seller.name} · ${listing.seller.phone}`
+                  : `${listing.seller.name} · phone hidden until accept`
+              }
+            />
+            <p className="text-[11px] text-muted">
+              Homeowner is never shown. Wires go to the title card, not the wholesaler.
+            </p>
+          </section>
         </div>
 
         <section className="card p-4 known-issues">
           <p className="font-semibold">Known issues</p>
           <p className="text-sm mt-1">{listing.knownIssues?.trim() ? listing.knownIssues : "None listed."}</p>
-        </section>
-
-        <section className="card p-4 space-y-2 text-sm">
-          <Row label="Seller ARV" value={`${listing.sellerArv ? usd(listing.sellerArv) : "—"} (seller's)`} />
-          <Row label="Seller repairs" value={usd(listing.sellerRepairs)} />
-          <Row label="Our rehab guess" value={usd(listing.rehabEstimate)} />
-          <Row label="Original contract" value={usd(listing.originalContractPrice)} />
-          <Row label="Occupancy" value={listing.occupancy} />
-          <Row label="Access" value={listing.access} />
-          <Row
-            label="Wholesaler"
-            value={
-              showSellerPhone
-                ? `${listing.seller.name} · ${listing.seller.phone}`
-                : `${listing.seller.name} · phone hidden until accept`
-            }
-          />
-          <p className="text-[11px] text-muted">
-            Homeowner is never shown. Wires go to the title card, not the wholesaler.
-          </p>
         </section>
 
         <section className="card p-4">
@@ -298,9 +297,9 @@ export default async function ListingPage({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <p className="text-[11px] uppercase tracking-wide text-muted font-bold">{label}</p>
-      <p>{value}</p>
+    <div className="listing-fact">
+      <span>{label}</span>
+      <span>{value}</span>
     </div>
   );
 }

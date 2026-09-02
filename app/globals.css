@@ -568,6 +568,40 @@ body {
   min-width: 0;
 }
 
+.listing-facts {
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.listing-fact {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.listing-fact:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 8px;
+}
+
+.listing-fact span:first-child {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex: 0 0 auto;
+}
+
+.listing-fact span:last-child {
+  text-align: right;
+  font-weight: 650;
+}
+
 .known-issues {
   background: color-mix(in srgb, var(--grade-b) 16%, var(--card));
   border-color: color-mix(in srgb, var(--grade-b) 55%, var(--line));
@@ -591,6 +625,14 @@ body {
     grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
     align-items: start;
     gap: 12px;
+  }
+
+  .avm-grade-row:has(.grade-card) {
+    grid-template-columns: minmax(140px, 200px) minmax(0, 50%) minmax(180px, 1fr);
+  }
+
+  .grade-card {
+    max-width: 100%;
   }
 }
 
