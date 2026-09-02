@@ -62,6 +62,7 @@ model BuyBox {
   minBeds            Int?
   minSf              Int?
   workLevels         String
+  willingToFix       String   @default("[]")
   maxRehab           Int?
   alertMode          String   @default("A_AND_B")
   excludedCities     String   @default("[]")
