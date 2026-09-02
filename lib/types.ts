@@ -56,6 +56,7 @@ export type BuyBoxInput = {
   minBeds?: number | null;
   minSf?: number | null;
   workLevels: WorkLevel[];
+  willingToFix: string[];
   maxRehab?: number | null;
 };
 
@@ -68,6 +69,7 @@ export type ListingGradeInput = {
   baths: number;
   sf: number;
   workLevel: WorkLevel;
+  needs: string[];
   rehabEstimate: number;
   verified: boolean;
   sellerBadge: Badge;

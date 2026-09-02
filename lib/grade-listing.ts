@@ -1,5 +1,6 @@
 import { daysBetween } from "./geo";
 import { gradeListing } from "./grade";
+import { parseNeedsWork } from "./needs-work";
 import { prisma } from "./prisma";
 import type { Badge, BuyBoxInput, WorkLevel } from "./types";
 
@@ -28,6 +29,7 @@ export async function gradeAndCache(
       baths: listing.baths,
       sf: listing.sf,
       workLevel: listing.workLevel as WorkLevel,
+      needs: parseNeedsWork(listing.needsWorkJson),
       rehabEstimate: listing.rehabEstimate,
       verified: listing.verified,
       sellerBadge: listing.seller.badge as Badge,
@@ -68,6 +70,7 @@ export function buyBoxFromRow(box: {
   minBeds: number | null;
   minSf: number | null;
   workLevels: string;
+  willingToFix?: string | null;
   maxRehab: number | null;
 }): BuyBoxInput {
   return {
@@ -78,6 +81,7 @@ export function buyBoxFromRow(box: {
     minBeds: box.minBeds,
     minSf: box.minSf,
     workLevels: JSON.parse(box.workLevels) as WorkLevel[],
+    willingToFix: parseNeedsWork(box.willingToFix),
     maxRehab: box.maxRehab,
   };
 }

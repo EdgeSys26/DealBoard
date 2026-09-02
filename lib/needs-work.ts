@@ -42,3 +42,14 @@ export function parseNeedsWork(raw: unknown): NeedsWork[] {
 export function needsWorkJson(raw: unknown): string {
   return JSON.stringify(parseNeedsWork(raw));
 }
+
+/** Empty willing-to-fix = all. Empty listing Needs = do not fail. */
+export function isNeedsCompatible(
+  listingNeeds: readonly string[],
+  willingToFix: readonly string[],
+): boolean {
+  if (!willingToFix.length) return true;
+  if (!listingNeeds.length) return true;
+  const allowed = new Set(willingToFix);
+  return listingNeeds.every((need) => allowed.has(need));
+}

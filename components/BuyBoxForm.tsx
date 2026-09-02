@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { saveBuyBoxAction } from "@/lib/save-buy-box";
 
-type Status = "idle" | "saving" | "saved" | "work" | "error";
+type Status = "idle" | "saving" | "saved" | "error";
 
 export function BuyBoxForm({ children }: { children: React.ReactNode }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -14,16 +14,11 @@ export function BuyBoxForm({ children }: { children: React.ReactNode }) {
   async function persist(form: HTMLFormElement) {
     const id = ++seqRef.current;
     const data = new FormData(form);
-    if (!data.getAll("workLevels").length) {
-      setStatus("work");
-      return;
-    }
     setStatus("saving");
     try {
       const result = await saveBuyBoxAction(data);
       if (id !== seqRef.current) return;
       if (result?.ok) setStatus("saved");
-      else if (result?.reason === "work") setStatus("work");
       else setStatus("error");
     } catch {
       if (id !== seqRef.current) return;
@@ -73,11 +68,9 @@ export function BuyBoxForm({ children }: { children: React.ReactNode }) {
           ? "Saving…"
           : status === "saved"
             ? "Saved"
-            : status === "work"
-              ? "Pick at least one in I’ll take."
-              : status === "error"
-                ? "Couldn’t save. Try that change again."
-                : "Changes save as you go."}
+            : status === "error"
+              ? "Couldn’t save. Try that change again."
+              : "Changes save as you go."}
       </p>
       {children}
     </form>

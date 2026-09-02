@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "./prisma";
 import { requireUser } from "./auth";
 import { refreshGradesForBox } from "./grade-listing";
-import { NOBLESVILLE_SQUARE, parseWorkLevels, type AlertMode } from "./types";
+import { NOBLESVILLE_SQUARE, WORK_LEVELS, type AlertMode } from "./types";
 import { persistBuyBoxZip } from "./geo-pins";
+import { needsWorkJson, parseNeedsWork } from "./needs-work";
 
 export async function saveBuyBoxAction(formData: FormData) {
   const user = await requireUser();
@@ -14,16 +15,12 @@ export async function saveBuyBoxAction(formData: FormData) {
   const minBedsRaw = String(formData.get("minBeds") || "");
   const minSfRaw = String(formData.get("minSf") || "");
   const maxRehabRaw = String(formData.get("maxRehab") || "");
-  const workLevels = parseWorkLevels(formData.getAll("workLevels"));
+  const willingToFix = parseNeedsWork(formData.getAll("willingToFix"));
   const rawAlert = String(formData.get("alertMode") || "A_AND_B");
   const alertMode: AlertMode =
     rawAlert === "A_ONLY" || rawAlert === "APP_ONLY" ? rawAlert : "A_AND_B";
   const typedZip = String(formData.get("zip") || "");
   const centerLabel = String(formData.get("centerLabel") || NOBLESVILLE_SQUARE.label);
-
-  if (!workLevels.length) {
-    return { ok: false as const, reason: "work" as const };
-  }
 
   const existing = await prisma.buyBox.findFirst({ where: { userId: user.id } });
   const { citiesIntersectingCircle, exclusionsFromBuyBoxForm, parseExcludedCities } = await import("./area-cities");
@@ -56,7 +53,8 @@ export async function saveBuyBoxAction(formData: FormData) {
     maxAssignmentPrice,
     minBeds: minBedsRaw ? Number(minBedsRaw) : null,
     minSf: minSfRaw ? Number(minSfRaw) : null,
-    workLevels: JSON.stringify(workLevels),
+    workLevels: JSON.stringify([...WORK_LEVELS]),
+    willingToFix: needsWorkJson(willingToFix),
     maxRehab: maxRehabRaw ? Number(maxRehabRaw) : null,
     alertMode,
     excludedCities,
@@ -66,5 +64,6 @@ export async function saveBuyBoxAction(formData: FormData) {
     : await prisma.buyBox.create({ data: { id: `buybox_${user.id}`, ...data } });
   await refreshGradesForBox(box.id);
   revalidatePath("/home");
+  revalidatePath("/buy-box");
   return { ok: true as const };
 }

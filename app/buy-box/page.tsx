@@ -6,8 +6,9 @@ import { BuyerNav } from "@/components/Nav";
 import { CheckRows } from "@/components/CheckRows";
 import { WhereSection } from "@/components/WhereSection";
 import { BuyBoxForm } from "@/components/BuyBoxForm";
-import { NOBLESVILLE_SQUARE, WORK_LEVELS, WORK_LEVEL_LABEL } from "@/lib/types";
+import { NOBLESVILLE_SQUARE } from "@/lib/types";
 import { parseExcludedCities } from "@/lib/area-cities";
+import { NEEDS_WORK, parseNeedsWork } from "@/lib/needs-work";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function BuyBoxPage() {
   const user = await getSessionUser();
   if (!user) redirect("/");
   const box = await getBuyBox(user.id);
-  const levels = box ? (JSON.parse(box.workLevels) as string[]) : ["MEDIUM", "FULL_GUT"];
+  const willing = box ? parseNeedsWork((box as { willingToFix?: string }).willingToFix) : [];
   const excludedCities = parseExcludedCities(box?.excludedCities);
 
   return (
@@ -52,16 +53,16 @@ export default async function BuyBoxPage() {
 
           <section className="card buybox-section">
             <div className="buybox-section-head">
-              <p className="font-semibold">3. I&apos;ll take</p>
+              <p className="font-semibold">3. Willing to fix</p>
             </div>
             <p className="text-xs text-muted">
-              Work. Same 8 the seller picks once. Roof, HVAC, and the rest are Needs work on
-              the listing — not a filter here.
+              Same 12 as seller Needs. Empty = all. A listing Need you did not check is out of
+              Matches and A/B.
             </p>
             <CheckRows
-              name="workLevels"
-              checked={levels}
-              options={WORK_LEVELS.map((value) => ({ value, label: WORK_LEVEL_LABEL[value] }))}
+              name="willingToFix"
+              checked={willing}
+              options={NEEDS_WORK.map((value) => ({ value, label: value }))}
             />
             <label className="field">
               Max rehab $ (optional)
