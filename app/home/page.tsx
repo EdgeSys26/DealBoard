@@ -17,6 +17,7 @@ import { offerCardStatus, offerCardTone } from "@/lib/offer-status";
 import { BADGE_LABEL, WORK_LEVEL_LABEL, type Letter, type WorkLevel } from "@/lib/types";
 import { daysBetween } from "@/lib/geo";
 import { formatSlot } from "@/lib/dates";
+import { isListingHot } from "@/lib/hot";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +109,11 @@ export default async function HomePage({
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={photos[0]} alt="" className="h-full w-full object-cover" />
                         <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
+                        {isListingHot(listing) ? (
+                          <span className="absolute top-2 left-2 text-[11px] font-bold bg-white/90 px-2 py-1 rounded-full">
+                            🔥 Hot
+                          </span>
+                        ) : null}
                         {listing.verified ? (
                           <span className="absolute top-2 right-2 text-[11px] font-bold bg-white/90 px-2 py-1 rounded-full">
                             Verified

@@ -127,6 +127,16 @@ body {
   color: var(--muted);
 }
 
+.listing-days.soon {
+  color: #C81E1E;
+  font-weight: 800;
+}
+
+.hot-flame {
+  display: inline-block;
+  margin-right: 4px;
+}
+
 .listing-status {
   display: flex;
   flex-direction: column;
