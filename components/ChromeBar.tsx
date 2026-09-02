@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { demoLoginAction, logoutAction } from "@/lib/actions";
 import type { Role } from "@/lib/types";
 import { DashTabs } from "@/components/DashTabs";
@@ -37,6 +38,22 @@ export function ChromeBar({
   const path = usePathname();
   const params = useSearchParams();
   const tab = params.get("tab") ?? "";
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  function toggleTheme() {
+    const next = !document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem("dealboard-theme", next ? "dark" : "light");
+    } catch {
+      /* ignore */
+    }
+    setDark(next);
+  }
   const admin = path === "/admin";
   const sellerTabs = SELLER_TABS.map((item) => {
     if (item.id === "offers" && sellerBadges.newOfferCount > 0 && tab !== "offers") {
@@ -65,6 +82,9 @@ export function ChromeBar({
       </Link>
       {tabs ? <DashTabs items={tabs} active={active} /> : <div className="dash-tabs" />}
       <div className="role-bar-pills">
+        <button type="button" className="role-pill" onClick={toggleTheme}>
+          {dark ? "Light" : "Dark"}
+        </button>
         {ROLES.map(({ role, label }) => (
           <form key={role} action={demoLoginAction}>
             <input type="hidden" name="role" value={role} />

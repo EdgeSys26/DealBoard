@@ -40,14 +40,19 @@ export function SellerListingRow({
   maxFloor,
   canHot,
   isHot,
+  checked,
+  onChecked,
 }: {
   listing: RowListing;
   platformDeposit: number;
   maxFloor: number;
   canHot: boolean;
   isHot: boolean;
+  checked: boolean;
+  onChecked: (id: string, next: boolean) => void;
 }) {
   const [dirty, setDirty] = useState(false);
+  const [asking, setAsking] = useState(listing.assignmentPrice);
   const photos = listingPhotos(listing);
   const deposit = Math.max(listing.titleDeposit ?? platformDeposit, platformDeposit);
   const expiresAt = new Date(listing.contractExpiresAt);
@@ -56,10 +61,10 @@ export function SellerListingRow({
     status: listing.status,
     contractExpiresAt: expiresAt,
   });
-  const spread = spreadLabel(listing.assignmentPrice - listing.originalContractPrice);
+  const spread = spreadLabel(asking - listing.originalContractPrice);
   const counter = listing.offers.find((offer) => offer.status === "COUNTERED");
   const formId = `listing-save-${listing.id}`;
-  const editHref = `/seller/listings/${listing.id}`;
+  const viewHref = `/listings/${listing.id}`;
 
   async function saveRow(formData: FormData) {
     await saveListingRowAction(listing.id, formData);
@@ -67,15 +72,23 @@ export function SellerListingRow({
   }
 
   return (
-    <ClickRow href={editHref}>
+    <ClickRow href={viewHref}>
       <td>
-        <Link href={editHref}>
+        <input
+          type="checkbox"
+          checked={checked}
+          aria-label={`Select ${listing.address}`}
+          onChange={(event) => onChecked(listing.id, event.target.checked)}
+        />
+      </td>
+      <td>
+        <Link href={viewHref}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={photos[0]} alt="" className="listing-thumb" />
         </Link>
       </td>
       <td>
-        <Link href={editHref} className="font-semibold">
+        <Link href={viewHref} className="font-semibold">
           {isHot ? <span className="hot-flame" aria-label="Hot">🔥</span> : null}
           {listing.address}
         </Link>
@@ -83,8 +96,20 @@ export function SellerListingRow({
       </td>
       <td className="whitespace-nowrap">{listing.city}</td>
       <td className="whitespace-nowrap">{usd(listing.originalContractPrice)}</td>
-      <td className="whitespace-nowrap">
-        {usd(listing.assignmentPrice)}
+      <td>
+        <input
+          form={formId}
+          name="assignmentPrice"
+          type="number"
+          min={1}
+          step={100}
+          defaultValue={listing.assignmentPrice}
+          aria-label="Asking"
+          onChange={(event) => {
+            setAsking(Number(event.target.value) || listing.assignmentPrice);
+            setDirty(true);
+          }}
+        />
         {spread ? <p className="listing-spread">{spread}</p> : null}
       </td>
       <td>
