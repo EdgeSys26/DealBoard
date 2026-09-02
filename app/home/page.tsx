@@ -19,6 +19,7 @@ import { BADGE_LABEL, WORK_LEVEL_LABEL, type Letter, type WorkLevel } from "@/li
 import { daysBetween } from "@/lib/geo";
 import { formatSlot } from "@/lib/dates";
 import { isListingHot } from "@/lib/hot";
+import { occupancyChip, TRESPASS_NOTICE } from "@/lib/occupancy";
 
 export const dynamic = "force-dynamic";
 
@@ -142,6 +143,7 @@ export default async function HomePage({
                         <p className="text-xs text-muted mt-1">
                           AVM {listing.platformAvm ? usd(listing.platformAvm) : "none"} · {days} days
                         </p>
+                        <span className="chip occupancy-chip mt-2">{occupancyChip(listing.occupancy)}</span>
                         {listing.id === "listing_pleasant" && !offer ? (
                           <p className="text-xs font-semibold text-accent mt-1">2-hour hold on this card</p>
                         ) : null}
@@ -151,6 +153,7 @@ export default async function HomePage({
                           {offerCardStatus(offer)}
                         </p>
                       ) : null}
+                      <p className="listing-trespass listing-trespass-card">{TRESPASS_NOTICE}</p>
                     </div>
                     <form action={hideListingAction.bind(null, listing.id)} className="px-3 pb-3 pt-2">
                       <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
