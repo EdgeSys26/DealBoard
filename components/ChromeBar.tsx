@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { demoLoginAction, logoutAction } from "@/lib/actions";
 import type { Role } from "@/lib/types";
 import { DashTabs } from "@/components/DashTabs";
+import { readStoredTheme, writeTheme } from "@/components/ThemeInit";
 
 const SELLER_TABS = [
   { id: "listings", href: "/seller?tab=listings", label: "Listings" },
@@ -41,17 +42,14 @@ export function ChromeBar({
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
+    const stored = readStoredTheme();
+    writeTheme(stored);
+    setDark(stored);
   }, []);
 
   function toggleTheme() {
-    const next = !document.documentElement.classList.contains("dark");
-    document.documentElement.classList.toggle("dark", next);
-    try {
-      localStorage.setItem("dealboard-theme", next ? "dark" : "light");
-    } catch {
-      /* ignore */
-    }
+    const next = !readStoredTheme();
+    writeTheme(next);
     setDark(next);
   }
   const admin = path === "/admin";

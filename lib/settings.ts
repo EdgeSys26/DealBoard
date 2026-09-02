@@ -98,10 +98,11 @@ export async function ensureBoardSettings() {
   for (const listing of listings) {
     const match = PHOTO_NEEDLES.find(([needle]) => listing.address.includes(needle));
     if (!match) continue;
-    if (listing.photosJson.includes("unsplash.com") && !listing.photosJson.includes(".svg")) continue;
+    const next = JSON.stringify(match[1]);
+    if (listing.photosJson === next) continue;
     await prisma.listing.update({
       where: { id: listing.id },
-      data: { photosJson: JSON.stringify(match[1]) },
+      data: { photosJson: next },
     });
   }
 
