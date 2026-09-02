@@ -107,7 +107,7 @@ const LISTINGS: ListingSeed[] = [
     beds: 3,
     baths: 2,
     sf: 1408,
-    occupancy: "Tenant month-to-month",
+    occupancy: "Tenant",
     access: "Showing window 10a–2p with 2-hour notice",
     contractExpiresAt: new Date("2026-09-05T17:00:00-04:00"),
     knownIssues: "Kitchen is original oak. One bath needs surround.",
@@ -316,6 +316,7 @@ export async function repairTrustDemo(prisma: PrismaClient) {
         lat: data.lat,
         lng: data.lng,
         photosJson: data.photosJson,
+        occupancy: data.occupancy,
         ...(pinTrust
           ? {
               contractUploaded: true,
