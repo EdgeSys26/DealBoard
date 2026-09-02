@@ -1,4 +1,5 @@
 import { clamp, haversineMiles } from "./geo";
+import { isNeedsCompatible } from "./needs-work";
 import type {
   Badge,
   BuyBoxInput,
@@ -98,8 +99,8 @@ export function gradeListing(
   if (box.minSf != null && listing.sf < box.minSf) {
     gateFails.push("Below minimum square feet");
   }
-  if (!isWorkCompatible(listing.workLevel, box.workLevels)) {
-    gateFails.push("Work not a match");
+  if (!isNeedsCompatible(listing.needs, box.willingToFix)) {
+    gateFails.push("Need not willing to fix");
   }
   if (box.maxRehab != null && listing.rehabEstimate > box.maxRehab) {
     gateFails.push("Rehab above max");

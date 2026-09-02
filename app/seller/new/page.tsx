@@ -74,16 +74,16 @@ export default async function NewListingPage() {
           </p>
           <label className="field">Our rehab guess<input name="rehabEstimate" type="number" defaultValue={15000} /></label>
           <p className="text-sm font-semibold">Work</p>
-          <p className="text-xs text-muted">Same 8 as buyer I&apos;ll take. One pick.</p>
+          <p className="text-xs text-muted">One pick. Not set from Needs.</p>
           <CheckRows
             name="workLevel"
             type="radio"
             checked={["MEDIUM"]}
             options={WORK_LEVELS.map((value) => ({ value, label: WORK_LEVEL_LABEL[value] }))}
           />
-          <p className="text-sm font-semibold">Needs work</p>
+          <p className="text-sm font-semibold">Needs</p>
           <p className="text-xs text-muted">
-            Same 12 the buyer sees as chips. Not I&apos;ll take, and not a buy-box filter.
+            Same 12 as buyer Willing to fix. Shown as chips on the listing.
           </p>
           <CheckRows
             name="needsWork"
