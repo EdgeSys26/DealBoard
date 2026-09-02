@@ -20,6 +20,7 @@ import { CompMap } from "@/components/CompMap";
 import { HoldTimer } from "@/components/HoldTimer";
 import { usd } from "@/lib/money";
 import { BADGE_LABEL, WORK_LEVEL_LABEL, type WorkLevel } from "@/lib/types";
+import { isListingHot } from "@/lib/hot";
 import { daysBetween } from "@/lib/geo";
 import { formatSlot } from "@/lib/dates";
 
@@ -90,6 +91,7 @@ export default async function ListingPage({
             ) : null}
             <div className="flex flex-wrap gap-2 mt-3">
               {listing.verified ? <span className="chip">Verified contract</span> : <span className="chip">Unverified</span>}
+              {isListingHot(listing) ? <span className="chip">🔥 Hot</span> : null}
               <span className="chip">{BADGE_LABEL[listing.seller.badge as "GREEN" | "SILVER" | "GOLD"]}</span>
               <span className="chip">{days} days left</span>
               {listing.hasWalkthrough ? <span className="chip">30s walkthrough</span> : <span className="chip">Limited distribution</span>}

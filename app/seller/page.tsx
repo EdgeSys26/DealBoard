@@ -11,6 +11,7 @@ import { isoDay, offerCardStatus } from "@/lib/offer-status";
 import { minOfferPrice } from "@/lib/offer-floor";
 import { usd } from "@/lib/money";
 import { formatSlot } from "@/lib/dates";
+import { evaluateHot, hotCooldownUntil, isListingHot, lastHotEndedAt } from "@/lib/hot";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,11 @@ export default async function SellerHome({
   const tab = sellerTab((await searchParams).tab);
   const sellerId = user.role === "ADMIN" ? "user_seller" : user.id;
   if (tab === "offers") await markSellerOffersSeenAction();
-  const { listings, meter, blasts, platformDeposit, levers, stats } = await getSellerDashboard(
-    sellerId,
-  );
+  const { listings, meter, blasts, platformDeposit, levers, stats, sellerBadge, strikeCount } =
+    await getSellerDashboard(sellerId);
+  const hotNow = new Date();
+  const liveHotId = listings.find((listing) => isListingHot(listing, hotNow))?.id ?? null;
+  const cooldownUntil = hotCooldownUntil(lastHotEndedAt(listings));
   const incoming = listings.flatMap((listing) =>
     listing.offers.map((offer) => ({ listing, offer })),
   );
@@ -119,25 +122,41 @@ export default async function SellerHome({
                     <tr>
                       <th></th>
                       <th>Address</th>
-                      <th>Contract</th>
+                      <th title="Pay homeowner">Contract</th>
                       <th>Asking</th>
                       <th>Status</th>
                       <th>Floor</th>
                       <th>Deposit</th>
                       <th>Activity</th>
-                      <th>Verified</th>
+                      <th></th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {listings.map((listing) => (
-                      <SellerListingRow
-                        key={listing.id}
-                        listing={listing}
-                        platformDeposit={platformDeposit}
-                        maxFloor={levers.defaultOfferFloorPct}
-                      />
-                    ))}
+                    {listings.map((listing) => {
+                      const hot = isListingHot(listing, hotNow);
+                      const canHot = evaluateHot({
+                        badge: sellerBadge,
+                        strikeCount,
+                        verified: listing.verified,
+                        status: listing.status,
+                        hasTitle: Boolean(listing.titleFile),
+                        listingHot: hot,
+                        sellerHasLiveHot: Boolean(liveHotId && liveHotId !== listing.id),
+                        cooldownUntil,
+                        now: hotNow,
+                      }).ok;
+                      return (
+                        <SellerListingRow
+                          key={listing.id}
+                          listing={listing}
+                          platformDeposit={platformDeposit}
+                          maxFloor={levers.defaultOfferFloorPct}
+                          canHot={canHot}
+                          isHot={hot}
+                        />
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -42,9 +42,6 @@ export function ChromeBar({
     if (item.id === "offers" && sellerBadges.newOfferCount > 0 && tab !== "offers") {
       return { ...item, dot: "green" as const, note: `${sellerBadges.newOfferCount} new` };
     }
-    if (item.id === "listings" && sellerBadges.expiring) {
-      return { ...item, dot: "red" as const };
-    }
     return item;
   });
   const tabs =

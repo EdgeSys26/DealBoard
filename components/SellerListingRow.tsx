@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ClickRow } from "@/components/ClickRow";
-import { saveListingRowAction, setListingStatusAction } from "@/lib/actions";
+import { saveListingRowAction, setListingStatusAction, startHotAction } from "@/lib/actions";
 import { listingPhotos } from "@/lib/listing-photos";
 import { listingDaysLeft, listingExpiresSoon } from "@/lib/seller-board";
 import { compactUsd, usd } from "@/lib/money";
@@ -21,6 +21,7 @@ type RowListing = {
   views: number;
   verified: boolean;
   contractExpiresAt: Date | string;
+  hotUntil?: Date | string | null;
   holds: { id: string }[];
   offers: { status: string; counterPrice: number | null; price: number }[];
 };
@@ -35,10 +36,14 @@ export function SellerListingRow({
   listing,
   platformDeposit,
   maxFloor,
+  canHot,
+  isHot,
 }: {
   listing: RowListing;
   platformDeposit: number;
   maxFloor: number;
+  canHot: boolean;
+  isHot: boolean;
 }) {
   const [dirty, setDirty] = useState(false);
   const photos = listingPhotos(listing);
@@ -60,13 +65,11 @@ export function SellerListingRow({
       </td>
       <td>
         <Link href={`/listings/${listing.id}`} className="font-semibold">
+          {isHot ? <span className="hot-flame" aria-label="Hot">🔥</span> : null}
           {listing.address}
-          {expiresSoon ? (
-            <span className="tab-dot red" title="Contract expires in 3 days or less" />
-          ) : null}
         </Link>
-        <p className="listing-days">
-          {days === 1 ? "1 day" : `${days} days`}
+        <p className={`listing-days${expiresSoon ? " soon" : ""}`}>
+          {days === 1 ? "1 day left" : `${days} days left`}
         </p>
       </td>
       <td className="whitespace-nowrap">{usd(listing.originalContractPrice)}</td>
@@ -114,6 +117,25 @@ export function SellerListingRow({
               Counter sent · {usd(counter.counterPrice ?? counter.price)}
             </p>
           ) : null}
+          {isHot ? <p className="listing-days">Hot</p> : null}
+          {canHot ? (
+            <div className="flex flex-wrap gap-1">
+              <form action={startHotAction}>
+                <input type="hidden" name="listingId" value={listing.id} />
+                <input type="hidden" name="hours" value="48" />
+                <button className="chip justify-center" type="submit">
+                  Hot $99 / 48h
+                </button>
+              </form>
+              <form action={startHotAction}>
+                <input type="hidden" name="listingId" value={listing.id} />
+                <input type="hidden" name="hours" value="72" />
+                <button className="chip justify-center" type="submit">
+                  Hot $179 / 72h
+                </button>
+              </form>
+            </div>
+          ) : null}
         </div>
       </td>
       <td>
@@ -147,7 +169,9 @@ export function SellerListingRow({
       <td className="whitespace-nowrap text-sm text-muted">
         {listing.views}/{listing.holds.length}/{listing.offers.length}
       </td>
-      <td className="whitespace-nowrap text-sm">{listing.verified ? "Yes" : "—"}</td>
+      <td className="whitespace-nowrap text-sm">
+        {listing.verified ? "Contract verified" : "No contract"}
+      </td>
       <td>
         <form id={formId} action={saveListingRowAction.bind(null, listing.id)}>
           <button className="listing-save" type="submit" disabled={!dirty}>
