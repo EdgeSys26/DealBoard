@@ -21,7 +21,7 @@ import { HoldTimer } from "@/components/HoldTimer";
 import { usd } from "@/lib/money";
 import { BADGE_LABEL, WORK_LEVEL_LABEL, type WorkLevel } from "@/lib/types";
 import { isListingHot } from "@/lib/hot";
-import { daysBetween } from "@/lib/geo";
+import { listingDaysCopy } from "@/lib/seller-board";
 import { formatSlot } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -51,7 +51,6 @@ export default async function ListingPage({
   }
 
   const { listing, grade, myHold, myOffer, accepted, floor, leftoverNow, titleDeposit, photos, isHidden, isSaved, showSellerPhone, showWire } = data;
-  const days = Math.max(0, daysBetween(new Date(), listing.contractExpiresAt));
   const letter = grade?.letter ?? "—";
   const otherHold = listing.holds.find((h) => h.buyerId !== user.id);
 
@@ -93,7 +92,7 @@ export default async function ListingPage({
               {listing.verified ? <span className="chip">Verified contract</span> : <span className="chip">Unverified</span>}
               {isListingHot(listing) ? <span className="chip">🔥 Hot</span> : null}
               <span className="chip">{BADGE_LABEL[listing.seller.badge as "GREEN" | "SILVER" | "GOLD"]}</span>
-              <span className="chip">{days} days left</span>
+              <span className="chip">{listingDaysCopy(listing.contractExpiresAt, listing.status)}</span>
               {listing.hasWalkthrough ? <span className="chip">30s walkthrough</span> : <span className="chip">Limited distribution</span>}
             </div>
           </div>
