@@ -146,6 +146,9 @@ describe("city chips", () => {
     expect(at8).not.toContain("Indianapolis");
     const at20 = citiesIntersectingCircle(NOBLESVILLE_SQUARE, 20);
     expect(at20).toContain("Zionsville");
+    expect(at20).toContain("Fishers");
+    expect(at20).toContain("Sheridan");
+    expect(at20).toContain("Arcadia");
   });
 
   it("hides a deselected city and keeps others on by default", () => {

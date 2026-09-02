@@ -83,6 +83,9 @@ export async function ensureBoardSettings() {
     ALTER TABLE "BuyBox" ADD COLUMN IF NOT EXISTS "excludedCities" TEXT NOT NULL DEFAULT '[]'
   `);
   await prisma.$executeRawUnsafe(`
+    ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "needsWorkJson" TEXT NOT NULL DEFAULT '[]'
+  `);
+  await prisma.$executeRawUnsafe(`
     INSERT INTO "PlatformSetting" (
       "id", "titleDeposit", "includedActiveSlots", "extraListingDollars",
       "defaultOfferFloorPct", "onHoldMaxDays"
