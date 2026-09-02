@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { displayGradeLabel, getBuyerBoard, letterTone } from "@/lib/queries";
-import { toggleLookingAction } from "@/lib/actions";
+import { saveBuyBoxAction, toggleLookingAction } from "@/lib/actions";
 import {
   acceptCounterAction,
   declineCounterAction,
@@ -14,7 +14,13 @@ import { SaveStar } from "@/components/SaveStar";
 import { listingPhotos } from "@/lib/listing-photos";
 import { compactUsd, usd } from "@/lib/money";
 import { offerCardStatus } from "@/lib/offer-status";
-import { BADGE_LABEL, WORK_LEVEL_LABEL, type Letter, type WorkLevel } from "@/lib/types";
+import {
+  BADGE_LABEL,
+  NOBLESVILLE_SQUARE,
+  WORK_LEVEL_LABEL,
+  type Letter,
+  type WorkLevel,
+} from "@/lib/types";
 import { daysBetween } from "@/lib/geo";
 import { formatSlot } from "@/lib/dates";
 
@@ -52,35 +58,110 @@ export default async function HomePage({
       <main className="flex-1 px-4 pb-4 space-y-2 pt-2">
         {tab === "matches" ? (
           <>
-            <div className="card px-4 py-3 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold tracking-tight">
-                  {looking ? "Looking — alerts on" : "Paused — no pushes"}
-                </p>
-                <p className="text-xs text-muted">
-                  {box
-                    ? `${box.centerLabel} · ${box.radiusMiles} mi · max ${usd(box.maxAssignmentPrice)}`
-                    : "Set a buy box to grade deals"}
-                </p>
+            <div className="card matches-head-card">
+              <div className="matches-head">
+                <div className="active-row">
+                  <span className="text-sm font-semibold tracking-tight">Active</span>
+                  <form action={toggleLookingAction}>
+                    <button
+                      className="active-switch"
+                      data-on={looking ? "true" : "false"}
+                      type="submit"
+                      aria-pressed={looking}
+                      aria-label={looking ? "Active, alerts on" : "Paused, no alerts"}
+                    >
+                      <span className="active-knob" />
+                    </button>
+                  </form>
+                </div>
+                <details className="filters-menu">
+                  <summary className="chip">Filters</summary>
+                  <form action={saveBuyBoxAction} className="filters-form">
+                    {box?.maxRehab != null ? (
+                      <input type="hidden" name="maxRehab" value={box.maxRehab} />
+                    ) : null}
+                    <label className="field">
+                      Pin or zip
+                      <input
+                        name="centerLabel"
+                        defaultValue={box?.centerLabel ?? NOBLESVILLE_SQUARE.label}
+                      />
+                    </label>
+                    <label className="field">
+                      Zip
+                      <input name="zip" defaultValue={box?.zip ?? NOBLESVILLE_SQUARE.zip} />
+                    </label>
+                    <label className="field">
+                      Radius (mi)
+                      <input
+                        name="radiusMiles"
+                        type="number"
+                        step="0.5"
+                        defaultValue={box?.radiusMiles ?? 8}
+                      />
+                    </label>
+                    <label className="field">
+                      Max price
+                      <input
+                        name="maxAssignmentPrice"
+                        type="number"
+                        defaultValue={box?.maxAssignmentPrice ?? 250000}
+                      />
+                    </label>
+                    <label className="field">
+                      Min beds
+                      <input name="minBeds" type="number" defaultValue={box?.minBeds ?? ""} />
+                    </label>
+                    <label className="field">
+                      Min sqft
+                      <input name="minSf" type="number" defaultValue={box?.minSf ?? ""} />
+                    </label>
+                    <fieldset className="filters-work">
+                      <legend>Work level</legend>
+                      {(
+                        [
+                          ["TURNKEY", "Turnkey"],
+                          ["PAINT_CARPET", "Paint & carpet"],
+                          ["MEDIUM", "Medium"],
+                          ["FULL_GUT", "Full gut"],
+                        ] as const
+                      ).map(([value, label]) => (
+                        <label key={value}>
+                          <input
+                            type="checkbox"
+                            name="workLevels"
+                            value={value}
+                            defaultChecked={(box
+                              ? (JSON.parse(box.workLevels) as string[])
+                              : ["MEDIUM", "FULL_GUT"]
+                            ).includes(value)}
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </fieldset>
+                    <label className="field">
+                      Alerts
+                      <select
+                        name="alertMode"
+                        defaultValue={box?.alertMode === "A_ONLY" ? "A_ONLY" : "A_AND_B"}
+                      >
+                        <option value="A_AND_B">A / B</option>
+                        <option value="A_ONLY">A only</option>
+                      </select>
+                    </label>
+                    <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
+                      Save
+                    </button>
+                  </form>
+                </details>
               </div>
-              <form action={toggleLookingAction}>
-                <button className="chip" data-on={looking ? "true" : "false"} type="submit">
-                  {looking ? "Looking" : "Paused"}
-                </button>
-              </form>
             </div>
 
             {user.quietHours ? (
               <p className="text-[11px] text-muted px-1">
                 Quiet hours 9pm–7am. Alerts stay in the app until morning.
               </p>
-            ) : null}
-
-            {!box ? (
-              <Link href="/buy-box" className="card p-4 block">
-                <p className="font-semibold">Set your buy box</p>
-                <p className="text-sm text-muted mt-1">Four questions. Then we only show A and B range.</p>
-              </Link>
             ) : null}
 
             <div className="match-grid">
