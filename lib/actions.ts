@@ -519,6 +519,65 @@ export async function sendBlastAction(formData: FormData) {
   return;
 }
 
+export async function startHotAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "SELLER" && user.role !== "ADMIN") return;
+  const listingId = String(formData.get("listingId") || "");
+  const { evaluateHot, hotPlan, isListingHot, lastHotEndedAt, hotCooldownUntil } = await import("./hot");
+  const plan = hotPlan(Number(formData.get("hours")));
+  if (!listingId || !plan) return;
+  const listing = await prisma.listing.findUnique({
+    where: { id: listingId },
+    include: {
+      seller: { include: { strikes: { select: { id: true } } } },
+      titleFile: { select: { id: true } },
+    },
+  });
+  if (!listing) return;
+  const sellerId = user.role === "ADMIN" ? listing.sellerId : user.id;
+  if (listing.sellerId !== sellerId) return;
+  const siblings = await prisma.listing.findMany({
+    where: { sellerId: listing.sellerId },
+    select: { id: true, hotUntil: true },
+  });
+  const now = new Date();
+  const gate = evaluateHot({
+    badge: listing.seller.badge,
+    strikeCount: listing.seller.strikes.length,
+    verified: listing.verified,
+    status: listing.status,
+    hasTitle: Boolean(listing.titleFile),
+    listingHot: isListingHot(listing, now),
+    sellerHasLiveHot: siblings.some((row) => row.id !== listing.id && isListingHot(row, now)),
+    cooldownUntil: hotCooldownUntil(lastHotEndedAt(siblings)),
+    now,
+  });
+  if (!gate.ok) return;
+  const hotUntil = new Date(now.getTime() + plan.hours * 60 * 60 * 1000);
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { hotUntil, hotHours: plan.hours },
+  });
+  await prisma.billingAdjustment.create({
+    data: {
+      sellerId: listing.sellerId,
+      amount: plan.dollars,
+      reason: `Hot ${plan.label} · ${listing.address}`,
+    },
+  });
+  await prisma.blast.create({
+    data: {
+      sellerId: listing.sellerId,
+      listingId,
+      message: `Hot ${plan.label} · ${listing.address} · A/B only`,
+    },
+  });
+  revalidatePath("/seller");
+  revalidatePath("/home");
+  revalidatePath("/admin");
+  revalidatePath(`/listings/${listingId}`);
+}
+
 export async function createListingAction(formData: FormData) {
   const user = await requireUser();
   if (user.role !== "SELLER" && user.role !== "ADMIN") {

@@ -148,4 +148,10 @@ describe("all in area", () => {
     expect(isInArea(harbour, demoBox)).toBe(true);
     expect(isInArea({ lat: 41.5, lng: -87.7 }, demoBox)).toBe(false);
   });
+
+  it("puts 355 Mulberry St Zionsville 46077 outside 8 miles and inside 20", () => {
+    const zionsville = { lat: 39.9509, lng: -86.2619 };
+    expect(isInArea(zionsville, demoBox)).toBe(false);
+    expect(isInArea(zionsville, { ...demoBox, radiusMiles: 20 })).toBe(true);
+  });
 });

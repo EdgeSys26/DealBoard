@@ -22,7 +22,7 @@ type ListingSeed = {
   access: string;
   contractExpiresAt: Date;
   knownIssues: string;
-  photosKind: "pleasant" | "cicero" | "harbour" | "patriots" | "persistence";
+  photosKind: "pleasant" | "cicero" | "harbour" | "patriots" | "persistence" | "zionsville";
   contractUploaded: boolean;
   verified: boolean;
   workLevel: string;
@@ -178,6 +178,35 @@ const LISTINGS: ListingSeed[] = [
     liveStartedAt: new Date("2026-08-26T12:00:00-04:00"),
     views: 9,
   },
+  {
+    id: "listing_zionsville",
+    sellerId: "user_seller",
+    address: "355 Mulberry St",
+    city: "Zionsville",
+    zip: "46077",
+    lat: 39.9509,
+    lng: -86.2619,
+    assignmentPrice: 229_000,
+    originalContractPrice: 214_000,
+    sellerArv: 275_000,
+    sellerRepairs: 12_000,
+    platformAvm: 268_000,
+    beds: 3,
+    baths: 2,
+    sf: 1360,
+    occupancy: "Vacant",
+    access: "Lockbox",
+    contractExpiresAt: new Date("2026-09-14T17:00:00-04:00"),
+    knownIssues: "Verified Active 3-bed in 46077 for radius include/exclude.",
+    photosKind: "zionsville",
+    contractUploaded: true,
+    verified: true,
+    workLevel: "MEDIUM",
+    rehabEstimate: 14_000,
+    status: "ACTIVE",
+    liveStartedAt: new Date("2026-08-27T12:00:00-04:00"),
+    views: 6,
+  },
 ];
 
 const GOLD_ADDRESSES = [
@@ -271,7 +300,11 @@ export async function repairTrustDemo(prisma: PrismaClient) {
       await prisma.listing.create({ data: { id: row.id, ...data } });
       continue;
     }
-    const pinTrust = row.id === "listing_patriots" || row.id === "listing_pleasant" || row.id === "listing_cicero";
+    const pinTrust =
+      row.id === "listing_patriots" ||
+      row.id === "listing_pleasant" ||
+      row.id === "listing_cicero" ||
+      row.id === "listing_zionsville";
     const demoteLiveUnverified = existing.status === "ACTIVE" && !existing.verified;
     await prisma.listing.update({
       where: { id: row.id },
