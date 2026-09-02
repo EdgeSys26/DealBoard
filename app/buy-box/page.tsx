@@ -5,8 +5,9 @@ import { saveBuyBoxAction } from "@/lib/actions";
 import { TopBar } from "@/components/TopBar";
 import { BuyerNav } from "@/components/Nav";
 import { CheckRows } from "@/components/CheckRows";
+import { WhereSection } from "@/components/WhereSection";
 import { NOBLESVILLE_SQUARE, WORK_LEVELS, WORK_LEVEL_LABEL } from "@/lib/types";
-import { citiesIntersectingCircle, parseExcludedCities } from "@/lib/area-cities";
+import { parseExcludedCities } from "@/lib/area-cities";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +24,6 @@ export default async function BuyBoxPage() {
   if (!user) redirect("/");
   const box = await getBuyBox(user.id);
   const levels = box ? (JSON.parse(box.workLevels) as string[]) : ["MEDIUM", "FULL_GUT"];
-  const chipCities = citiesIntersectingCircle(
-    {
-      lat: box?.lat ?? NOBLESVILLE_SQUARE.lat,
-      lng: box?.lng ?? NOBLESVILLE_SQUARE.lng,
-    },
-    box?.radiusMiles ?? 8,
-  );
   const excludedCities = parseExcludedCities(box?.excludedCities);
 
   return (
@@ -37,43 +31,14 @@ export default async function BuyBoxPage() {
       <TopBar user={user} title="Buy box" />
       <main className="flex-1 px-4 pb-2 buybox-page">
         <form action={saveBuyBoxAction} className="buybox-form">
-          <section className="card buybox-section">
-            <div className="buybox-section-head">
-              <p className="font-semibold">1. Where</p>
-              <SectionSave />
-            </div>
-            <label className="field">
-              Pin or zip
-              <input name="centerLabel" defaultValue={box?.centerLabel ?? NOBLESVILLE_SQUARE.label} />
-            </label>
-            <label className="field">
-              Zip
-              <input name="zip" defaultValue={box?.zip ?? "46060"} />
-            </label>
-            <label className="field">
-              Radius (miles)
-              <input name="radiusMiles" type="number" step="0.5" defaultValue={box?.radiusMiles ?? 8} />
-            </label>
-            <p className="text-sm font-medium">Cities in this circle</p>
-            <div className="city-chips">
-              {chipCities.map((city) => (
-                <label key={city} className="chip" data-on={!excludedCities.includes(city) ? "true" : "false"}>
-                  <input
-                    type="checkbox"
-                    name="cities"
-                    value={city}
-                    defaultChecked={!excludedCities.includes(city)}
-                    className="w-auto"
-                  />
-                  {city}
-                </label>
-              ))}
-            </div>
-            <p className="text-xs text-muted">
-              Default all on. Deselect a city to hide it from Home and this box. Alerts stay A/B only
-              inside selected cities.
-            </p>
-          </section>
+          <WhereSection
+            centerLabel={box?.centerLabel ?? NOBLESVILLE_SQUARE.label}
+            zip={box?.zip ?? NOBLESVILLE_SQUARE.zip}
+            radiusMiles={box?.radiusMiles ?? 8}
+            lat={box?.lat ?? NOBLESVILLE_SQUARE.lat}
+            lng={box?.lng ?? NOBLESVILLE_SQUARE.lng}
+            excludedCities={excludedCities}
+          />
 
           <section className="card buybox-section">
             <div className="buybox-section-head">
@@ -122,12 +87,6 @@ export default async function BuyBoxPage() {
             </select>
             <p className="text-xs text-muted">Pushes stay A/B. C and D never page you.</p>
           </section>
-
-          <div className="buybox-sticky">
-            <button className="btn-primary" type="submit">
-              Save buy box
-            </button>
-          </div>
         </form>
       </main>
       <BuyerNav />

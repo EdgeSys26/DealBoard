@@ -14,12 +14,22 @@ export const AREA_CITIES = [
   { name: "McCordsville", lat: 39.9064, lng: -85.9208, spread: 2 },
   { name: "Fortville", lat: 39.9323, lng: -85.8472, spread: 2 },
   { name: "Fillmore", lat: 39.7356, lng: -86.7536, spread: 2 },
+  { name: "Avon", lat: 39.763, lng: -86.4, spread: 2.5 },
+  { name: "Brownsburg", lat: 39.843, lng: -86.398, spread: 2.5 },
+  { name: "Lebanon", lat: 40.048, lng: -86.469, spread: 2.5 },
+  { name: "Greenfield", lat: 39.785, lng: -85.769, spread: 2.5 },
+  { name: "Pendleton", lat: 40.003, lng: -85.746, spread: 2 },
+  { name: "Plainfield", lat: 39.704, lng: -86.399, spread: 2.5 },
+  { name: "Greenwood", lat: 39.614, lng: -86.107, spread: 3 },
+  { name: "Anderson", lat: 40.105, lng: -85.68, spread: 3 },
+  { name: "Tipton", lat: 40.282, lng: -86.041, spread: 2 },
+  { name: "Lapel", lat: 40.068, lng: -85.848, spread: 1.5 },
 ] as const;
 
 export function citiesIntersectingCircle(
   pin: { lat: number; lng: number },
   radiusMiles: number,
-) {
+): string[] {
   return AREA_CITIES.filter(
     (city) => haversineMiles(pin, city) <= radiusMiles + city.spread + 0.05,
   ).map((city) => city.name);
@@ -44,13 +54,9 @@ export function homeCityChips(cities: string[], excluded: string[]) {
 }
 
 export function mergeExcludedCities(
-  previous: string[],
+  _previous: string[],
   chipCities: string[],
   selected: string[],
 ) {
-  const next = new Set(previous.filter((city) => !chipCities.includes(city)));
-  for (const city of chipCities) {
-    if (!selected.includes(city)) next.add(city);
-  }
-  return [...next];
+  return chipCities.filter((city) => !selected.includes(city));
 }
