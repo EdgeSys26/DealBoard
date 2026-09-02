@@ -10,7 +10,9 @@ export function listingExpiresSoon(
   listing: { status: string; contractExpiresAt: Date },
   now = new Date(),
 ) {
-  if (listing.status === "EXPIRED" || listing.status === "ASSIGNED") return false;
+  if (listing.status === "EXPIRED" || listing.status === "ASSIGNED" || listing.status === "DRAFT") {
+    return false;
+  }
   const days = listingDaysLeft(listing.contractExpiresAt, now);
   return days >= 0 && days <= EXPIRY_WARN_DAYS;
 }

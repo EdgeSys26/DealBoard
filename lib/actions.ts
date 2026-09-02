@@ -132,7 +132,7 @@ export async function holdListingAction(listingId: string) {
   const user = await requireUser();
   await applyLifecycle();
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
-  if (!listing || listing.status !== "ACTIVE") {
+  if (!listing || listing.status !== "ACTIVE" || !listing.verified) {
     return;
   }
   const existing = await prisma.hold.findFirst({
@@ -166,7 +166,7 @@ export async function placeOfferAction(formData: FormData) {
   const rehabGuess = Number(formData.get("rehabGuess") || 0);
 
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
-  if (!listing || listing.status === "ON_HOLD" || listing.status === "EXPIRED") {
+  if (!listing || listing.status !== "ACTIVE" || !listing.verified) {
     return;
   }
 
@@ -290,7 +290,10 @@ export async function setListingStatusAction(listingId: string, status: string) 
   if (!listing || (listing.sellerId !== user.id && user.role !== "ADMIN")) {
     return;
   }
-  if (!["ACTIVE", "ON_HOLD", "UNDER_CONTRACT", "ASSIGNED", "EXPIRED"].includes(status)) {
+  if (!["DRAFT", "ACTIVE", "ON_HOLD", "UNDER_CONTRACT", "ASSIGNED", "EXPIRED"].includes(status)) {
+    return;
+  }
+  if (status === "ACTIVE" && !listing.verified) {
     return;
   }
 
@@ -315,10 +318,15 @@ export async function setListingStatusAction(listingId: string, status: string) 
       data: { status, onHoldUntil: null },
     });
   }
+  if (status === "ASSIGNED") {
+    const { recalcOnFundedClose } = await import("./badge");
+    await recalcOnFundedClose(listingId);
+  }
   revalidatePath("/seller");
   revalidatePath("/home");
   revalidatePath(`/listings/${listingId}`);
   revalidatePath("/messages");
+  revalidatePath("/admin");
 }
 
 export async function tightenFloorAction(listingId: string, formData: FormData) {
@@ -557,7 +565,7 @@ export async function createListingAction(formData: FormData) {
       hasWalkthrough: walkthrough,
       walkthroughUrl: walkthrough ? "/walkthrough/new.mp4" : null,
       contractUploaded: String(formData.get("contractUploaded")) === "on",
-      verified: String(formData.get("contractUploaded")) === "on",
+      verified: false,
       workLevel: String(formData.get("workLevel")),
       rehabEstimate: Number(formData.get("rehabEstimate") || 0),
       offerFloorPct: Number(formData.get("offerFloorPct") || (await getBoardLevers()).defaultOfferFloorPct),
@@ -565,7 +573,7 @@ export async function createListingAction(formData: FormData) {
         Number(formData.get("titleDeposit")),
         await getPlatformTitleDeposit(),
       ),
-      status: "ACTIVE",
+      status: "DRAFT",
       liveStartedAt: new Date(),
     },
   });

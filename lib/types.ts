@@ -13,6 +13,7 @@ export const WORK_LEVELS = [
 export type WorkLevel = (typeof WORK_LEVELS)[number];
 
 export const LISTING_STATUSES = [
+  "DRAFT",
   "ACTIVE",
   "ON_HOLD",
   "UNDER_CONTRACT",
@@ -79,6 +80,7 @@ export const WORK_LEVEL_LABEL: Record<WorkLevel, string> = {
 };
 
 export const STATUS_LABEL: Record<ListingStatus, string> = {
+  DRAFT: "Draft",
   ACTIVE: "Active",
   ON_HOLD: "On hold",
   UNDER_CONTRACT: "Pending",

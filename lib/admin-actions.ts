@@ -92,6 +92,64 @@ export async function strikeUserAction(formData: FormData) {
   const target = await prisma.user.findUnique({ where: { id: targetId } });
   if (!target || target.role === "ADMIN") return;
   await prisma.strike.create({ data: { userId: targetId, reason } });
+  const { recalcUserBadge } = await import("./badge");
+  await recalcUserBadge(targetId);
+  revalidatePath("/admin");
+}
+
+export async function verifyListingAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return;
+  const listingId = String(formData.get("listingId") || "");
+  if (!listingId) return;
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing) return;
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { verified: true },
+  });
+  revalidatePath("/admin");
+  revalidatePath("/seller");
+  revalidatePath(`/listings/${listingId}`);
+}
+
+export async function rejectListingAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return;
+  const listingId = String(formData.get("listingId") || "");
+  if (!listingId) return;
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing) return;
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { verified: false, status: "DRAFT", onHoldUntil: null },
+  });
+  revalidatePath("/admin");
+  revalidatePath("/seller");
+  revalidatePath("/home");
+  revalidatePath(`/listings/${listingId}`);
+}
+
+export async function setBadgeOverrideAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return;
+  const targetId = String(formData.get("userId") || "");
+  const { parseBadgeOverride, recalcUserBadge } = await import("./badge");
+  const next = parseBadgeOverride(String(formData.get("badge") || ""));
+  const target = await prisma.user.findUnique({ where: { id: targetId } });
+  if (!target || target.role === "ADMIN" || !next) return;
+  if (next === "AUTO") {
+    await prisma.user.update({
+      where: { id: targetId },
+      data: { badgeOverride: false },
+    });
+    await recalcUserBadge(targetId);
+  } else {
+    await prisma.user.update({
+      where: { id: targetId },
+      data: { badge: next, badgeOverride: true },
+    });
+  }
   revalidatePath("/admin");
 }
 

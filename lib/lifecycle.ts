@@ -7,6 +7,13 @@ export async function applyLifecycle(now = new Date()) {
   });
 
   for (const listing of listings) {
+    if (listing.status === "ACTIVE" && !listing.verified) {
+      await prisma.listing.update({
+        where: { id: listing.id },
+        data: { status: "DRAFT", onHoldUntil: null },
+      });
+      continue;
+    }
     if (listing.contractExpiresAt.getTime() <= now.getTime()) {
       await expireListing(listing.id, "Contract date reached.");
       continue;
@@ -20,14 +27,15 @@ export async function applyLifecycle(now = new Date()) {
     if (listing.status === "ON_HOLD" && listing.onHoldUntil) {
       if (listing.onHoldUntil.getTime() <= now.getTime()) {
         const stillInLiveWindow = liveEnd.getTime() > now.getTime();
+        const canActivate = stillInLiveWindow && listing.verified;
         await prisma.listing.update({
           where: { id: listing.id },
           data: {
-            status: stillInLiveWindow ? "ACTIVE" : "EXPIRED",
+            status: canActivate ? "ACTIVE" : stillInLiveWindow ? "DRAFT" : "EXPIRED",
             onHoldUntil: null,
           },
         });
-        if (stillInLiveWindow) {
+        if (canActivate) {
           await unfreezeThreads(listing.id);
         }
       }

@@ -56,7 +56,7 @@ export async function placeOfferAction(formData: FormData) {
   const attachPof = String(formData.get("attachPof") || "") === "on";
 
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
-  if (!listing || listing.status !== "ACTIVE") {
+  if (!listing || listing.status !== "ACTIVE" || !listing.verified) {
     return;
   }
 
