@@ -973,3 +973,34 @@ html.dark .role-pill.is-on {
 html.dark .listing-save:disabled {
   background: #4a4f59;
 }
+
+.occupancy-chip {
+  font-size: 11px;
+  padding: 3px 7px;
+  font-weight: 700;
+}
+
+.listing-trespass {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.listing-trespass-card {
+  margin-top: 8px;
+}
+
+.occupancy-edit-controls {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+
+.occupancy-edit-controls select {
+  width: auto;
+  min-width: 8.5rem;
+  padding: 5px 6px;
+  font-size: 12px;
+}
