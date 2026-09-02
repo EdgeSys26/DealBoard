@@ -1095,3 +1095,8 @@ html.dark .listing-save:disabled {
 html.dark .buybox-sticky {
   box-shadow: 0 -6px 18px color-mix(in srgb, #000 40%, transparent);
 }
+
+html.dark .bottom-nav {
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  border-color: var(--line);
+}
