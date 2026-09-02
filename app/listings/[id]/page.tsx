@@ -20,7 +20,9 @@ import { SaveStar } from "@/components/SaveStar";
 import { CompMap } from "@/components/CompMap";
 import { HoldTimer } from "@/components/HoldTimer";
 import { usd } from "@/lib/money";
-import { BADGE_LABEL, WORK_LEVEL_LABEL, type WorkLevel } from "@/lib/types";
+import { BADGE_LABEL, WORK_LEVELS, WORK_LEVEL_LABEL, type WorkLevel } from "@/lib/types";
+import { CheckRows } from "@/components/CheckRows";
+import { NEEDS_WORK, parseNeedsWork } from "@/lib/needs-work";
 import { isListingHot } from "@/lib/hot";
 import { listingDaysCopy } from "@/lib/seller-board";
 import { formatSlot } from "@/lib/dates";
@@ -134,20 +136,38 @@ export default async function ListingPage({
             <Row label="Our rehab guess" value={usd(listing.rehabEstimate)} />
             <Row label="Original contract" value={usd(listing.originalContractPrice)} />
             {user.role === "SELLER" || user.role === "ADMIN" ? (
-              <form action={updateListingOccupancyAction} className="listing-fact occupancy-edit">
-                <span>Occupancy</span>
-                <span className="occupancy-edit-controls">
-                  <input type="hidden" name="listingId" value={listing.id} />
-                  <select name="occupancy" defaultValue={parseOccupancy(listing.occupancy)}>
-                    <option value="Owner occupied">Owner occupied</option>
-                    <option value="Tenant">Tenant</option>
-                    <option value="Vacant">Vacant</option>
-                  </select>
-                  <button className="listing-save" type="submit">
-                    Save
-                  </button>
-                </span>
-              </form>
+              <>
+                <form action={updateListingOccupancyAction} className="listing-fact occupancy-edit">
+                  <span>Occupancy</span>
+                  <span className="occupancy-edit-controls">
+                    <input type="hidden" name="listingId" value={listing.id} />
+                    <select name="occupancy" defaultValue={parseOccupancy(listing.occupancy)}>
+                      <option value="Owner occupied">Owner occupied</option>
+                      <option value="Tenant">Tenant</option>
+                      <option value="Vacant">Vacant</option>
+                    </select>
+                    <button className="listing-save" type="submit">
+                      Save
+                    </button>
+                  </span>
+                </form>
+                <form action={updateListingOccupancyAction} className="listing-fact occupancy-edit">
+                  <span>Work</span>
+                  <span className="occupancy-edit-controls">
+                    <input type="hidden" name="listingId" value={listing.id} />
+                    <select name="workLevel" defaultValue={listing.workLevel}>
+                      {WORK_LEVELS.map((value) => (
+                        <option key={value} value={value}>
+                          {WORK_LEVEL_LABEL[value]}
+                        </option>
+                      ))}
+                    </select>
+                    <button className="listing-save" type="submit">
+                      Save
+                    </button>
+                  </span>
+                </form>
+              </>
             ) : (
               <Row label="Occupancy" value={parseOccupancy(listing.occupancy)} />
             )}
@@ -169,6 +189,31 @@ export default async function ListingPage({
         <section className="card p-4 known-issues">
           <p className="font-semibold">Known issues</p>
           <p className="text-sm mt-1">{listing.knownIssues?.trim() ? listing.knownIssues : "None listed."}</p>
+          {user.role === "BUYER" ? (
+            parseNeedsWork(listing.needsWorkJson).length ? (
+              <div className="needs-chips">
+                {parseNeedsWork(listing.needsWorkJson).map((item) => (
+                  <span key={item} className="chip occupancy-chip">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            ) : null
+          ) : user.role === "SELLER" || user.role === "ADMIN" ? (
+            <form action={updateListingOccupancyAction} className="mt-3 space-y-2">
+              <input type="hidden" name="listingId" value={listing.id} />
+              <input type="hidden" name="needsWorkSent" value="1" />
+              <p className="text-sm font-semibold">Needs work</p>
+              <CheckRows
+                name="needsWork"
+                checked={parseNeedsWork(listing.needsWorkJson)}
+                options={NEEDS_WORK.map((value) => ({ value, label: value }))}
+              />
+              <button className="listing-save" type="submit">
+                Save
+              </button>
+            </form>
+          ) : null}
         </section>
 
         <section className="card p-4">
