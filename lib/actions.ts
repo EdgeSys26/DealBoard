@@ -14,7 +14,8 @@ import { ensureDemoDb } from "./ensure-demo";
 import { refreshGradesForBox } from "./grade-listing";
 import { applyLifecycle, freezeThreads, onHoldCapDate, unfreezeThreads } from "./lifecycle";
 import { assertOfferFloor, tightenFloorPct } from "./offer-floor";
-import { HOLD_MS, NOBLESVILLE_SQUARE, type AlertMode, type WorkLevel } from "./types";
+import { HOLD_MS, NOBLESVILLE_SQUARE, parseWorkLevel, parseWorkLevels, type AlertMode } from "./types";
+import { needsWorkJson } from "./needs-work";
 import { clampListingDeposit, listingTitleDeposit } from "./deposit";
 import { getBoardLevers, getPlatformTitleDeposit } from "./settings";
 import { PHOTO_NEW } from "./listing-photos";
@@ -71,7 +72,7 @@ export async function saveBuyBoxAction(formData: FormData) {
   const minBedsRaw = String(formData.get("minBeds") || "");
   const minSfRaw = String(formData.get("minSf") || "");
   const maxRehabRaw = String(formData.get("maxRehab") || "");
-  const workLevels = formData.getAll("workLevels").map(String) as WorkLevel[];
+  const workLevels = parseWorkLevels(formData.getAll("workLevels"));
   const rawAlert = String(formData.get("alertMode") || "A_AND_B");
   const alertMode: AlertMode =
     rawAlert === "A_ONLY" || rawAlert === "APP_ONLY" ? rawAlert : "A_AND_B";
@@ -678,12 +679,13 @@ export async function createListingAction(formData: FormData) {
       access: String(formData.get("access") || "TBD"),
       contractExpiresAt: expiresAt,
       knownIssues: String(formData.get("knownIssues") || ""),
+      needsWorkJson: needsWorkJson(formData.getAll("needsWork")),
       photosJson: JSON.stringify(photos),
       hasWalkthrough: walkthrough,
       walkthroughUrl: walkthrough ? "/walkthrough/new.mp4" : null,
       contractUploaded: String(formData.get("contractUploaded")) === "on",
       verified: false,
-      workLevel: String(formData.get("workLevel")),
+      workLevel: parseWorkLevel(formData.get("workLevel")),
       rehabEstimate: Number(formData.get("rehabEstimate") || 0),
       offerFloorPct: Number(formData.get("offerFloorPct") || (await getBoardLevers()).defaultOfferFloorPct),
       titleDeposit: clampListingDeposit(
@@ -710,9 +712,14 @@ export async function updateListingOccupancyAction(formData: FormData) {
   const listingId = String(formData.get("listingId") || "");
   const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing || (listing.sellerId !== user.id && user.role !== "ADMIN")) return;
+  const data: { occupancy?: string; workLevel?: string; needsWorkJson?: string } = {};
+  if (formData.has("occupancy")) data.occupancy = parseOccupancy(formData.get("occupancy"));
+  if (formData.has("workLevel")) data.workLevel = parseWorkLevel(formData.get("workLevel"));
+  if (formData.has("needsWorkSent")) data.needsWorkJson = needsWorkJson(formData.getAll("needsWork"));
+  if (!Object.keys(data).length) return;
   await prisma.listing.update({
     where: { id: listingId },
-    data: { occupancy: parseOccupancy(formData.get("occupancy")) },
+    data,
   });
   revalidatePath("/seller");
   revalidatePath("/home");
