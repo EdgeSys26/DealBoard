@@ -3,6 +3,8 @@ import { gradeListing, isAlertLetter, isInArea, leftover } from "./grade";
 import { NOBLESVILLE_SQUARE } from "./types";
 import { minOfferPrice, assertOfferFloor, tightenFloorPct } from "./offer-floor";
 import { daysBetween, haversineMiles } from "./geo";
+import { listingDaysCopy, listingDaysLeft } from "./seller-board";
+import { priceChangeBody } from "./money";
 
 const demoBox = {
   lat: NOBLESVILLE_SQUARE.lat,
@@ -106,6 +108,21 @@ describe("calendar days", () => {
     expect(
       daysBetween(new Date("2026-08-30T20:00:00Z"), new Date("2026-09-10T21:00:00Z")),
     ).toBe(11);
+  });
+
+  it("never shows negative days left", () => {
+    const now = new Date("2026-09-02T16:00:00Z");
+    const past = new Date("2026-08-01T17:00:00-04:00");
+    expect(listingDaysLeft(past, now)).toBe(0);
+    expect(listingDaysCopy(past, "ASSIGNED", now)).toBe("Expired");
+    expect(listingDaysCopy(past, "EXPIRED", now)).toBe("Expired");
+    expect(listingDaysCopy(new Date("2026-09-02T17:00:00Z"), "ACTIVE", now)).toBe("0 days left");
+  });
+});
+
+describe("price change copy", () => {
+  it("notifies Price changed · $X", () => {
+    expect(priceChangeBody(189_000)).toBe("Price changed · $189,000");
   });
 });
 
