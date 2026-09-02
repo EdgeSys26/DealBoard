@@ -174,7 +174,7 @@ export default async function ListingPage({
           {user.role === "SELLER" || user.role === "ADMIN" ? (
             <form action={updateListingOccupancyAction} className="mt-2 space-y-2">
               <input type="hidden" name="listingId" value={listing.id} />
-              <p className="text-xs text-muted">Same 8 as buyer I&apos;ll take. One pick.</p>
+              <p className="text-xs text-muted">One pick. Not set from Needs.</p>
               <CheckRows
                 name="workLevel"
                 type="radio"
@@ -191,13 +191,13 @@ export default async function ListingPage({
         </section>
 
         <section className="card p-4 needs-work">
-          <p className="font-semibold">Needs work</p>
+          <p className="font-semibold">Needs</p>
           {user.role === "SELLER" || user.role === "ADMIN" ? (
             <form action={updateListingOccupancyAction} className="mt-2 space-y-2">
               <input type="hidden" name="listingId" value={listing.id} />
               <input type="hidden" name="needsWorkSent" value="1" />
               <p className="text-xs text-muted">
-                Same 12 the buyer sees as chips. Not I&apos;ll take, and not a buy-box filter.
+                Same 12 as buyer Willing to fix. Buyer sees these as chips.
               </p>
               <CheckRows
                 name="needsWork"

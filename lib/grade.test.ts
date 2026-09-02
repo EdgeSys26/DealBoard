@@ -15,6 +15,7 @@ const demoBox = {
   minBeds: 3,
   minSf: null,
   workLevels: ["MEDIUM", "FULL_GUT"] as const,
+  willingToFix: [] as string[],
   maxRehab: null,
 };
 
@@ -27,6 +28,7 @@ const pleasant = {
   baths: 1,
   sf: 1216,
   workLevel: "MEDIUM" as const,
+  needs: [] as string[],
   rehabEstimate: 12_000,
   verified: true,
   sellerBadge: "SILVER" as const,
@@ -44,6 +46,7 @@ const cicero = {
   baths: 2,
   sf: 1408,
   workLevel: "MEDIUM" as const,
+  needs: [] as string[],
   rehabEstimate: 35_000,
   verified: true,
   sellerBadge: "SILVER" as const,
@@ -61,6 +64,7 @@ const harbour = {
   baths: 2,
   sf: 1104,
   workLevel: "PAINT_CARPET" as const,
+  needs: [] as string[],
   rehabEstimate: 8_000,
   verified: false,
   sellerBadge: "GREEN" as const,
@@ -186,6 +190,45 @@ describe("offer floor", () => {
   it("lets the seller tighten but not loosen the floor", () => {
     expect(tightenFloorPct(10, 5)).toBe(5);
     expect(tightenFloorPct(5, 10)).toBe(5);
+  });
+});
+
+describe("willing to fix vs Needs", () => {
+  it("keeps a listing in Matches when Willing to fix is empty", () => {
+    const g = gradeListing(
+      { ...pleasant, needs: ["Roof", "Foundation"] },
+      { ...demoBox, workLevels: [...demoBox.workLevels], willingToFix: [] },
+    );
+    expect(g.isFit).toBe(true);
+    expect(g.letter).toBe("A+");
+  });
+
+  it("does not fail a listing with empty Needs", () => {
+    const g = gradeListing(
+      { ...pleasant, needs: [] },
+      { ...demoBox, workLevels: [...demoBox.workLevels], willingToFix: ["Roof"] },
+    );
+    expect(g.isFit).toBe(true);
+  });
+
+  it("drops a listing Need the buyer did not check from Matches and A/B", () => {
+    const g = gradeListing(
+      { ...pleasant, needs: ["Roof", "Foundation"] },
+      { ...demoBox, workLevels: [...demoBox.workLevels], willingToFix: ["Roof"] },
+    );
+    expect(g.isFit).toBe(false);
+    expect(g.letter).toBe("NO_FIT");
+    expect(g.gateFails).toContain("Need not willing to fix");
+    expect(isAlertLetter(g.letter)).toBe(false);
+  });
+
+  it("does not set Rehab from Needs", () => {
+    const g = gradeListing(
+      { ...pleasant, needs: ["Roof"], workLevel: "TURNKEY", rehabEstimate: 12_000 },
+      { ...demoBox, workLevels: [...demoBox.workLevels], willingToFix: ["Roof"] },
+    );
+    expect(g.isFit).toBe(true);
+    expect(g.letter).toBe("A+");
   });
 });
 

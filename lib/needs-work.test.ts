@@ -5,10 +5,10 @@ import {
   PHOTO_MCCORDSVILLE,
   PHOTO_SHERIDAN,
 } from "./listing-photos";
-import { NEEDS_WORK, needsWorkJson, parseNeedsWork } from "./needs-work";
+import { NEEDS_WORK, isNeedsCompatible, needsWorkJson, parseNeedsWork } from "./needs-work";
 import { parseWorkLevel, parseWorkLevels, WORK_LEVEL_LABEL, WORK_LEVELS } from "./types";
 
-describe("I'll take work levels", () => {
+describe("Work levels", () => {
   it("keeps the eight buyer options", () => {
     expect(WORK_LEVELS).toEqual([
       "TURNKEY",
@@ -51,8 +51,15 @@ describe("needs work punch list", () => {
     expect(needsWorkJson(["Roof"])).toBe('["Roof"]');
   });
 
-  it("does not reuse I'll take labels for Needs work", () => {
+  it("does not reuse Work labels for Needs", () => {
     expect(NEEDS_WORK).not.toEqual(Object.values(WORK_LEVEL_LABEL));
+  });
+
+  it("matches Willing to fix against listing Needs", () => {
+    expect(isNeedsCompatible(["Roof"], [])).toBe(true);
+    expect(isNeedsCompatible([], ["Roof"])).toBe(true);
+    expect(isNeedsCompatible(["Roof", "Foundation"], ["Roof"])).toBe(false);
+    expect(isNeedsCompatible(["Roof"], ["Roof", "HVAC"])).toBe(true);
   });
 });
 
