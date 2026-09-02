@@ -83,6 +83,11 @@ export default async function ListingPage({
               {listing.beds} bd · {listing.baths} ba · {listing.sf} sf ·{" "}
               {WORK_LEVEL_LABEL[listing.workLevel as WorkLevel]}
             </p>
+            {!listing.verified && (user.role === "SELLER" || user.role === "ADMIN") ? (
+              <p className="text-sm text-muted mt-2">
+                Draft only until an admin verifies the contract. Publish, Matches, and billing stay off.
+              </p>
+            ) : null}
             <div className="flex flex-wrap gap-2 mt-3">
               {listing.verified ? <span className="chip">Verified contract</span> : <span className="chip">Unverified</span>}
               <span className="chip">{BADGE_LABEL[listing.seller.badge as "GREEN" | "SILVER" | "GOLD"]}</span>

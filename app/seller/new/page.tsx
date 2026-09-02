@@ -21,8 +21,8 @@ export default async function NewListingPage() {
       <main className="flex-1 px-4 pb-6">
         <form action={createListingAction} className="space-y-3">
           <p className="text-sm text-muted">
-            Photos plus a 30-second walkthrough are required for full distribution.
-            Private contract upload unlocks the verified badge.
+            Save a draft anytime. Publish stays blocked until an admin verifies the
+            contract. Unverified listings cannot go Active — no Matches, All in area, or invoice.
           </p>
           <label className="field">Address<input name="address" required placeholder="123 Main St" /></label>
           <label className="field">City<input name="city" defaultValue="Noblesville" /></label>
@@ -79,9 +79,20 @@ export default async function NewListingPage() {
           </label>
           <label className="flex gap-2 text-sm font-medium">
             <input name="contractUploaded" type="checkbox" className="w-auto" />
-            Private contract uploaded (verified)
+            Private contract uploaded
           </label>
-          <button className="btn-primary" type="submit">Publish</button>
+          <p className="text-[11px] text-muted">
+            Upload is not verification. Admin Listings or Review must mark the contract verified.
+          </p>
+          <button className="btn-primary" type="submit">
+            Save draft
+          </button>
+          <button className="btn-secondary" type="button" disabled>
+            Publish
+          </button>
+          <p className="text-[11px] text-muted">
+            Publish is blocked until admin approves the contract.
+          </p>
         </form>
       </main>
       <SellerNav />

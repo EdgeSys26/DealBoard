@@ -8,9 +8,12 @@ import {
   expireListingAdminAction,
   freezeUserAction,
   killListingAdminAction,
+  rejectListingAction,
+  setBadgeOverrideAction,
   setPlatformLeversAction,
   strikeUserAction,
   unfreezeUserAction,
+  verifyListingAction,
 } from "@/lib/admin-actions";
 import { usd } from "@/lib/money";
 import { BADGE_LABEL, STATUS_LABEL, type Badge, type ListingStatus } from "@/lib/types";
@@ -67,6 +70,7 @@ export default async function AdminPage({
     sellerBilling,
     tiles,
     soldDeals,
+    reviewListings,
   } = await getAdminData();
   const muteAlerts = muteRates.filter((row) => row.alert);
   const openReports = reports.filter((r) => r.status === "OPEN");
@@ -130,6 +134,9 @@ export default async function AdminPage({
                   </span>
                   <span>
                     Mute alerts <b>{tiles.muteAlerts}</b>
+                  </span>
+                  <span>
+                    Review <b>{tiles.review}</b>
                   </span>
                 </div>
               </section>
@@ -355,7 +362,24 @@ export default async function AdminPage({
                             </p>
                           </td>
                           <td className="whitespace-nowrap text-sm">{u.role.toLowerCase()}</td>
-                          <td className="whitespace-nowrap text-sm">{BADGE_LABEL[u.badge as Badge]}</td>
+                          <td className="whitespace-nowrap text-sm">
+                            <form action={setBadgeOverrideAction} className="flex flex-col gap-1 min-w-[120px]">
+                              <input type="hidden" name="userId" value={u.id} />
+                              <span>
+                                {BADGE_LABEL[u.badge as Badge]}
+                                {u.badgeOverride ? " · override" : ""}
+                              </span>
+                              <select name="badge" defaultValue={u.badgeOverride ? u.badge : "AUTO"}>
+                                <option value="AUTO">Auto</option>
+                                <option value="GREEN">Green</option>
+                                <option value="SILVER">Silver</option>
+                                <option value="GOLD">Gold</option>
+                              </select>
+                              <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
+                                Set badge
+                              </button>
+                            </form>
+                          </td>
                           <td>{u.strikes.length}</td>
                           <td>{stats.fundedBuys}</td>
                           <td>{stats.fundedSells}</td>
@@ -439,6 +463,14 @@ export default async function AdminPage({
                         <td>{listing.offers.length}</td>
                         <td>
                           <div className="flex flex-wrap gap-1">
+                            {!listing.verified ? (
+                              <form action={verifyListingAction}>
+                                <input type="hidden" name="listingId" value={listing.id} />
+                                <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
+                                  Mark verified
+                                </button>
+                              </form>
+                            ) : null}
                             <form action={expireListingAdminAction.bind(null, listing.id)}>
                               <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
                                 Expire
@@ -556,7 +588,38 @@ export default async function AdminPage({
 
         {tab === "queue" ? (
           <section className="card p-4 space-y-3">
-            <p className="font-semibold">Queue</p>
+            <p className="font-semibold">Review</p>
+            <p className="text-xs text-muted">
+              Listings awaiting contract review. Approve marks verified. Reject keeps Draft.
+            </p>
+            {reviewListings.length === 0 ? (
+              <p className="text-sm text-muted">No contracts waiting.</p>
+            ) : (
+              reviewListings.map((listing) => (
+                <div key={listing.id} className="border-t border-line pt-3 first:border-0 first:pt-0">
+                  <p className="text-sm font-semibold">{listing.address}</p>
+                  <p className="text-xs text-muted">
+                    {listing.seller.name} · {STATUS_LABEL[listing.status as ListingStatus] ?? listing.status}
+                    {listing.contractUploaded ? " · contract uploaded" : " · no contract"}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <form action={verifyListingAction}>
+                      <input type="hidden" name="listingId" value={listing.id} />
+                      <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
+                        Approve
+                      </button>
+                    </form>
+                    <form action={rejectListingAction}>
+                      <input type="hidden" name="listingId" value={listing.id} />
+                      <button className="btn-secondary w-auto px-2 py-1 text-xs" type="submit">
+                        Reject
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ))
+            )}
+            <p className="font-semibold pt-2">Queue</p>
             <p className="text-xs text-muted">
               Reports, mute-rate alerts (≥5 mutes and ≥40% of engaged), fall-throughs.
             </p>

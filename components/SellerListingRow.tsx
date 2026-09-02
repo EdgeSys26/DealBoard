@@ -77,18 +77,38 @@ export function SellerListingRow({
       <td>
         <div className="listing-status">
           <div className="flex flex-wrap gap-1">
-            {(["ACTIVE", "ON_HOLD", "UNDER_CONTRACT"] as const).map((status) => (
-              <form key={status} action={setListingStatusAction.bind(null, listing.id, status)}>
-                <button
-                  className="chip justify-center"
-                  data-on={listing.status === status ? "true" : "false"}
-                  type="submit"
-                >
-                  {STATUS_LABEL[status]}
-                </button>
-              </form>
-            ))}
+            {listing.verified ? (
+              (["ACTIVE", "ON_HOLD", "UNDER_CONTRACT"] as const).map((status) => (
+                <form key={status} action={setListingStatusAction.bind(null, listing.id, status)}>
+                  <button
+                    className="chip justify-center"
+                    data-on={listing.status === status ? "true" : "false"}
+                    type="submit"
+                  >
+                    {STATUS_LABEL[status]}
+                  </button>
+                </form>
+              ))
+            ) : (
+              <>
+                <span className="chip justify-center" data-on="true">
+                  Draft
+                </span>
+                {listing.status !== "DRAFT" ? (
+                  <form action={setListingStatusAction.bind(null, listing.id, "DRAFT")}>
+                    <button className="chip justify-center" type="submit">
+                      Move to draft
+                    </button>
+                  </form>
+                ) : null}
+              </>
+            )}
           </div>
+          {!listing.verified ? (
+            <p className="listing-days">Publish blocked until contract verified</p>
+          ) : listing.status === "DRAFT" ? (
+            <p className="listing-days">Verified — set Active to publish</p>
+          ) : null}
           {counter ? (
             <p className="offer-status-pill counter listing-counter-chip">
               Counter sent · {usd(counter.counterPrice ?? counter.price)}
