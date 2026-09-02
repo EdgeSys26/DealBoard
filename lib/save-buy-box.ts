@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
 import { requireUser } from "./auth";
 import { refreshGradesForBox } from "./grade-listing";
 import { NOBLESVILLE_SQUARE, parseWorkLevels, type AlertMode } from "./types";
+import { persistBuyBoxZip } from "./geo-pins";
 
 export async function saveBuyBoxAction(formData: FormData) {
   const user = await requireUser();
@@ -18,16 +18,17 @@ export async function saveBuyBoxAction(formData: FormData) {
   const rawAlert = String(formData.get("alertMode") || "A_AND_B");
   const alertMode: AlertMode =
     rawAlert === "A_ONLY" || rawAlert === "APP_ONLY" ? rawAlert : "A_AND_B";
-  const zip = String(formData.get("zip") || NOBLESVILLE_SQUARE.zip);
+  const typedZip = String(formData.get("zip") || "");
   const centerLabel = String(formData.get("centerLabel") || NOBLESVILLE_SQUARE.label);
 
   if (!workLevels.length) {
-    return;
+    return { ok: false as const, reason: "work" as const };
   }
 
   const existing = await prisma.buyBox.findFirst({ where: { userId: user.id } });
   const { citiesIntersectingCircle, mergeExcludedCities, parseExcludedCities } = await import("./area-cities");
   const { resolveBuyBoxPin } = await import("./geo-pins");
+  const zip = persistBuyBoxZip(typedZip, existing?.zip);
   const pin = resolveBuyBoxPin({
     zip,
     centerLabel,
@@ -60,6 +61,5 @@ export async function saveBuyBoxAction(formData: FormData) {
     : await prisma.buyBox.create({ data: { id: `buybox_${user.id}`, ...data } });
   await refreshGradesForBox(box.id);
   revalidatePath("/home");
-  revalidatePath("/buy-box");
-  redirect("/buy-box");
+  return { ok: true as const };
 }

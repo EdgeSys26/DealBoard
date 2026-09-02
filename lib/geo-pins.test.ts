@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { citiesIntersectingCircle } from "./area-cities";
-import { resolveBuyBoxPin } from "./geo-pins";
+import { persistBuyBoxZip, resolveBuyBoxPin } from "./geo-pins";
 import { NOBLESVILLE_SQUARE } from "./types";
 
 describe("resolveBuyBoxPin", () => {
@@ -44,5 +44,10 @@ describe("resolveBuyBoxPin", () => {
     expect(pin.matched).toBe(true);
     expect(pin.zip).toBe("46032");
     expect(citiesIntersectingCircle(pin, 8)).toContain("Carmel");
+  });
+
+  it("does not persist a half-typed zip", () => {
+    expect(persistBuyBoxZip("4607", "46060")).toBe("46060");
+    expect(persistBuyBoxZip("46077", "46060")).toBe("46077");
   });
 });
