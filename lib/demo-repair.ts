@@ -384,6 +384,21 @@ export async function repairTrustDemo(prisma: PrismaClient) {
     data: { status: "DRAFT", onHoldUntil: null },
   });
 
+  const extras = await prisma.listing.findMany({
+    where: {
+      OR: [
+        { address: { contains: "Patriots Landing" }, id: { not: "listing_patriots" } },
+        { address: { contains: "Persistence" }, id: { not: "listing_persistence" } },
+      ],
+    },
+    select: { id: true },
+  });
+  if (extras.length) {
+    const ids = extras.map((row) => row.id);
+    await prisma.blast.updateMany({ where: { listingId: { in: ids } }, data: { listingId: null } });
+    await prisma.listing.deleteMany({ where: { id: { in: ids } } });
+  }
+
   await recalcUserBadge(morgan.id);
   await recalcUserBadge(riley.id);
   await recalcUserBadge(gold.id);
