@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { displayGradeLabel, getBuyerBoard, letterTone, parseFeedView } from "@/lib/queries";
 import { toggleLookingAction } from "@/lib/actions";
 import { CityChipRow } from "@/components/CityChipRow";
+import { homeCityChips } from "@/lib/area-cities";
 import {
   acceptCounterAction,
   declineCounterAction,
@@ -90,7 +91,11 @@ export default async function HomePage({
                   </Link>
                 </div>
               </div>
-              <CityChipRow cities={cityChips} excluded={excludedCities} view={feedView} />
+              <CityChipRow
+                cities={homeCityChips(cityChips, excludedCities)}
+                excluded={excludedCities}
+                view={feedView}
+              />
             </div>
 
             {user.quietHours ? (

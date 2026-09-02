@@ -4,7 +4,7 @@ import { NOBLESVILLE_SQUARE } from "./types";
 import { minOfferPrice, assertOfferFloor, tightenFloorPct } from "./offer-floor";
 import { daysBetween, haversineMiles } from "./geo";
 import { listingDaysCopy, listingDaysLeft, listingMatchesStatusFilter, parseSellerStatusFilter } from "./seller-board";
-import { citiesIntersectingCircle, cityAllowed, mergeExcludedCities } from "./area-cities";
+import { citiesIntersectingCircle, cityAllowed, homeCityChips, mergeExcludedCities } from "./area-cities";
 import { priceChangeBody } from "./money";
 
 const demoBox = {
@@ -155,6 +155,12 @@ describe("city chips", () => {
     expect(cityAllowed("Noblesville", [])).toBe(true);
     expect(cityAllowed("Noblesville", ["Noblesville"])).toBe(false);
     expect(mergeExcludedCities([], ["Noblesville", "Carmel"], ["Noblesville"])).toEqual(["Carmel"]);
+  });
+
+  it("omits deselected cities from the home chip row", () => {
+    expect(homeCityChips(["Noblesville", "Whitestown", "Sheridan"], ["Whitestown", "Sheridan"])).toEqual([
+      "Noblesville",
+    ]);
   });
 });
 

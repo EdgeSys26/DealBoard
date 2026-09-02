@@ -39,6 +39,10 @@ export function cityAllowed(city: string, excluded: string[]) {
   return !excluded.includes(city);
 }
 
+export function homeCityChips(cities: string[], excluded: string[]) {
+  return cities.filter((city) => cityAllowed(city, excluded));
+}
+
 export function mergeExcludedCities(
   previous: string[],
   chipCities: string[],
