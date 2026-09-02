@@ -5,7 +5,7 @@ import { getSellerDashboard } from "@/lib/queries";
 import { sendBlastAction } from "@/lib/actions";
 import { acceptOfferAction, counterOfferAction, markSellerOffersSeenAction } from "@/lib/deal-actions";
 import { SellerNav } from "@/components/Nav";
-import { SellerListingRow } from "@/components/SellerListingRow";
+import { SellerListingsTable } from "@/components/SellerListingsTable";
 import { bidVsAsking } from "@/lib/bid-tone";
 import { isoDay, offerCardStatus } from "@/lib/offer-status";
 import { minOfferPrice } from "@/lib/offer-floor";
@@ -156,60 +156,36 @@ export default async function SellerHome({
                 <p className="font-semibold">No listings in this filter</p>
               </div>
             ) : (
-              <div className="card overflow-x-auto">
-                <table className="board-table listings-table">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>Address</th>
-                      <th>
-                        <Link
-                          href={
-                            citySort === "city"
-                              ? "/seller?tab=listings&sort=city-desc"
-                              : "/seller?tab=listings&sort=city"
-                          }
-                        >
-                          City{citySort === "city" ? " ↑" : citySort === "city-desc" ? " ↓" : ""}
-                        </Link>
-                      </th>
-                      <th title="Pay homeowner">Contract</th>
-                      <th>Asking</th>
-                      <th>Status</th>
-                      <th>Floor</th>
-                      <th>Deposit</th>
-                      <th>Views / Saves</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableListings.map((listing) => {
-                      const hot = isListingHot(listing, hotNow);
-                      const canHot = evaluateHot({
-                        badge: sellerBadge,
-                        strikeCount,
-                        verified: listing.verified,
-                        status: listing.status,
-                        hasTitle: Boolean(listing.titleFile),
-                        listingHot: hot,
-                        sellerHasLiveHot: Boolean(liveHotId && liveHotId !== listing.id),
-                        cooldownUntil,
-                        now: hotNow,
-                      }).ok;
-                      return (
-                        <SellerListingRow
-                          key={listing.id}
-                          listing={listing}
-                          platformDeposit={platformDeposit}
-                          maxFloor={levers.defaultOfferFloorPct}
-                          canHot={canHot}
-                          isHot={hot}
-                        />
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              <SellerListingsTable
+                platformDeposit={platformDeposit}
+                maxFloor={levers.defaultOfferFloorPct}
+                cityHeader={
+                  <Link
+                    href={
+                      citySort === "city"
+                        ? "/seller?tab=listings&sort=city-desc"
+                        : "/seller?tab=listings&sort=city"
+                    }
+                  >
+                    City{citySort === "city" ? " ↑" : citySort === "city-desc" ? " ↓" : ""}
+                  </Link>
+                }
+                rows={tableListings.map((listing) => {
+                  const hot = isListingHot(listing, hotNow);
+                  const canHot = evaluateHot({
+                    badge: sellerBadge,
+                    strikeCount,
+                    verified: listing.verified,
+                    status: listing.status,
+                    hasTitle: Boolean(listing.titleFile),
+                    listingHot: hot,
+                    sellerHasLiveHot: Boolean(liveHotId && liveHotId !== listing.id),
+                    cooldownUntil,
+                    now: hotNow,
+                  }).ok;
+                  return { listing, canHot, isHot: hot };
+                })}
+              />
             )}
           </>
         ) : null}

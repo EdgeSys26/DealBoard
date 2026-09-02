@@ -59,7 +59,7 @@ export function SellerListingsTable({
             type="submit"
             onClick={(event) => {
               if (!confirm("Remove selected listings from the board?")) event.preventDefault();
-            }
+            }}
           >
             Remove
           </button>
