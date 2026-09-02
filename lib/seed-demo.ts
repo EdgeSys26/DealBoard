@@ -90,6 +90,7 @@ export async function seedDemo(prisma: PrismaClient) {
       minBeds: 3,
       minSf: null,
       workLevels: JSON.stringify(["MEDIUM", "FULL_GUT"]),
+      willingToFix: "[]",
       maxRehab: null,
       alertMode: "A_AND_B",
     },
@@ -214,16 +215,9 @@ export async function seedDemo(prisma: PrismaClient) {
     },
   });
 
-  const boxInput = {
-    lat: box.lat,
-    lng: box.lng,
-    radiusMiles: box.radiusMiles,
-    maxAssignmentPrice: box.maxAssignmentPrice,
-    minBeds: box.minBeds,
-    minSf: box.minSf,
-    workLevels: JSON.parse(box.workLevels) as WorkLevel[],
-    maxRehab: box.maxRehab,
-  };
+  const { buyBoxFromRow } = await import("./grade-listing");
+  const { parseNeedsWork } = await import("./needs-work");
+  const boxInput = buyBoxFromRow(box);
 
   const morganNow = await prisma.user.findUniqueOrThrow({ where: { id: seller.id } });
   const rileyNow = await prisma.user.findUniqueOrThrow({ where: { id: greenSeller.id } });
@@ -248,6 +242,7 @@ export async function seedDemo(prisma: PrismaClient) {
         baths: listing.baths,
         sf: listing.sf,
         workLevel: listing.workLevel as WorkLevel,
+        needs: parseNeedsWork(listing.needsWorkJson),
         rehabEstimate: listing.rehabEstimate,
         verified: listing.verified,
         sellerBadge: sellerRow.badge as Badge,
