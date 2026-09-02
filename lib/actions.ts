@@ -138,3 +138,558 @@ export async function holdListingAction(listingId: string) {
   revalidatePath(`/listings/${listingId}`);
   revalidatePath("/home");
 }
+
+export async function placeOfferAction(formData: FormData) {
+  const user = await requireUser();
+  await applyLifecycle();
+  const listingId = String(formData.get("listingId"));
+  const price = Number(formData.get("price"));
+  const closeDate = new Date(String(formData.get("closeDate")));
+  const attachPof = String(formData.get("attachPof") || "") === "on";
+  const rehabGuess = Number(formData.get("rehabGuess") || 0);
+
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || listing.status !== "ACTIVE" || !listing.verified) {
+    return;
+  }
+
+  const floor = assertOfferFloor(price, listing.assignmentPrice, listing.offerFloorPct);
+  if (!floor.ok) return;
+  const deposit = listingTitleDeposit(listing, await getPlatformTitleDeposit());
+
+  if (attachPof) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { pofOnFile: true, entityOnFile: true, w9OnFile: true },
+    });
+  }
+
+  const fresh = await prisma.user.findUnique({ where: { id: user.id } });
+  if (!fresh?.pofOnFile || !fresh.entityOnFile || !fresh.w9OnFile) {
+    return;
+  }
+
+  await prisma.offer.create({
+    data: {
+      listingId,
+      buyerId: user.id,
+      price,
+      deposit,
+      closeDate,
+      status: "PENDING",
+      pofAttached: true,
+    },
+  });
+
+  await prisma.hold.updateMany({
+    where: { listingId, buyerId: user.id, released: false },
+    data: { released: true },
+  });
+
+  revalidatePath(`/listings/${listingId}`);
+  revalidatePath("/deals");
+  return;
+}
+
+export async function acceptOfferAction(offerId: string) {
+  const user = await requireUser();
+  const offer = await prisma.offer.findUnique({
+    where: { id: offerId },
+    include: { listing: true },
+  });
+  if (!offer || offer.listing.sellerId !== user.id) {
+    return;
+  }
+  await prisma.offer.update({
+    where: { id: offerId },
+    data: { status: "ACCEPTED" },
+  });
+  await prisma.offer.updateMany({
+    where: { listingId: offer.listingId, id: { not: offerId } },
+    data: { status: "REJECTED" },
+  });
+  await prisma.listing.update({
+    where: { id: offer.listingId },
+    data: { status: "UNDER_CONTRACT" },
+  });
+
+  const title = await prisma.titleFile.findUnique({
+    where: { listingId: offer.listingId },
+  });
+  if (title) {
+    const preferred = await prisma.titleSlot.findFirst({
+      where: { listingId: offer.listingId, id: "slot_pleasant_827" },
+    });
+    await prisma.titleFile.update({
+      where: { id: title.id },
+      data: {
+        offerId: offer.id,
+        wireReleased: true,
+        selectedSlotId: preferred?.id ?? title.selectedSlotId,
+      },
+    });
+    if (preferred) {
+      await prisma.titleSlot.update({
+        where: { id: preferred.id },
+        data: { selected: true },
+      });
+    }
+  }
+
+  revalidatePath("/seller");
+  revalidatePath(`/listings/${offer.listingId}`);
+  revalidatePath("/deals");
+}
+
+export async function pickTitleSlotAction(slotId: string) {
+  const user = await requireUser();
+  const slot = await prisma.titleSlot.findUnique({
+    where: { id: slotId },
+    include: { listing: { include: { offers: true, titleFile: true } } },
+  });
+  if (!slot) return;
+  const accepted = slot.listing.offers.find(
+    (o) => o.status === "ACCEPTED" && o.buyerId === user.id,
+  );
+  if (!accepted) return;
+  await prisma.titleSlot.updateMany({
+    where: { listingId: slot.listingId },
+    data: { selected: false },
+  });
+  await prisma.titleSlot.update({ where: { id: slotId }, data: { selected: true } });
+  if (slot.listing.titleFile) {
+    await prisma.titleFile.update({
+      where: { id: slot.listing.titleFile.id },
+      data: { selectedSlotId: slotId },
+    });
+  }
+  revalidatePath(`/listings/${slot.listingId}`);
+  revalidatePath("/deals");
+}
+
+export async function setListingStatusAction(listingId: string, status: string) {
+  const user = await requireUser();
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || (listing.sellerId !== user.id && user.role !== "ADMIN")) {
+    return;
+  }
+  if (!["DRAFT", "ACTIVE", "ON_HOLD", "UNDER_CONTRACT", "ASSIGNED", "EXPIRED"].includes(status)) {
+    return;
+  }
+  if (status === "ACTIVE" && !listing.verified) {
+    return;
+  }
+
+  if (status === "ON_HOLD") {
+    await prisma.listing.update({
+      where: { id: listingId },
+      data: { status: "ON_HOLD", onHoldUntil: onHoldCapDate(new Date(), (await getBoardLevers()).onHoldMaxDays) },
+    });
+    await freezeThreads(
+      listingId,
+      "Seller placed this listing on hold. The thread is frozen. On-hold listings are hidden from buyers and are not billed.",
+    );
+  } else if (status === "ACTIVE") {
+    await prisma.listing.update({
+      where: { id: listingId },
+      data: { status: "ACTIVE", onHoldUntil: null },
+    });
+    await unfreezeThreads(listingId);
+  } else {
+    await prisma.listing.update({
+      where: { id: listingId },
+      data: { status, onHoldUntil: null },
+    });
+  }
+  if (status === "ASSIGNED") {
+    const { recalcOnFundedClose } = await import("./badge");
+    await recalcOnFundedClose(listingId);
+  }
+  revalidatePath("/seller");
+  revalidatePath("/home");
+  revalidatePath(`/listings/${listingId}`);
+  revalidatePath("/messages");
+  revalidatePath("/admin");
+}
+
+export async function tightenFloorAction(listingId: string, formData: FormData) {
+  const user = await requireUser();
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || listing.sellerId !== user.id) return;
+  const next = Number(formData.get("offerFloorPct"));
+  const levers = await getBoardLevers();
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { offerFloorPct: tightenFloorPct(listing.offerFloorPct, next, levers.defaultOfferFloorPct) },
+  });
+  revalidatePath("/seller");
+}
+
+export async function setListingDepositAction(listingId: string, formData: FormData) {
+  const user = await requireUser();
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || listing.sellerId !== user.id) return;
+  const next = clampListingDeposit(Number(formData.get("titleDeposit")), await getPlatformTitleDeposit());
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { titleDeposit: next },
+  });
+  revalidatePath("/seller");
+  revalidatePath(`/listings/${listingId}`);
+}
+
+export async function saveListingRowAction(listingId: string, formData: FormData) {
+  const user = await requireUser();
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || (listing.sellerId !== user.id && user.role !== "ADMIN")) return;
+  const levers = await getBoardLevers();
+  const nextFloor = tightenFloorPct(
+    listing.offerFloorPct,
+    Number(formData.get("offerFloorPct")),
+    levers.defaultOfferFloorPct,
+  );
+  const nextDeposit = clampListingDeposit(
+    Number(formData.get("titleDeposit")),
+    await getPlatformTitleDeposit(),
+  );
+  const nextAsking = Math.round(Number(formData.get("assignmentPrice")));
+  const askingChanged = Number.isFinite(nextAsking) && nextAsking > 0 && nextAsking !== listing.assignmentPrice;
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: {
+      offerFloorPct: nextFloor,
+      titleDeposit: nextDeposit,
+      ...(askingChanged ? { assignmentPrice: nextAsking } : {}),
+    },
+  });
+  if (askingChanged) {
+    const { notifyAskingPriceChange } = await import("./price-notify");
+    await notifyAskingPriceChange(listingId, nextAsking, listing.sellerId);
+  }
+  revalidatePath("/seller");
+  revalidatePath("/home");
+  revalidatePath("/messages");
+  revalidatePath(`/listings/${listingId}`);
+}
+
+export async function batchListingAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "SELLER" && user.role !== "ADMIN") return;
+  const batch = String(formData.get("batch") || "");
+  const ids = formData.getAll("listingId").map(String).filter(Boolean);
+  const status =
+    batch === "hold" ? "ON_HOLD" : batch === "active" ? "ACTIVE" : batch === "remove" ? "EXPIRED" : "";
+  if (!status || ids.length === 0) return;
+  for (const id of ids) {
+    await setListingStatusAction(id, status);
+  }
+}
+
+export async function favoriteAction(listingId: string, kind: "FAVORITE" | "DONT_SHOW") {
+  const user = await requireUser();
+  const existing = await prisma.favorite.findUnique({
+    where: { userId_listingId: { userId: user.id, listingId } },
+  });
+  if (existing && existing.kind === kind) {
+    await prisma.favorite.delete({ where: { id: existing.id } });
+  } else if (existing) {
+    await prisma.favorite.update({ where: { id: existing.id }, data: { kind } });
+  } else {
+    await prisma.favorite.create({ data: { userId: user.id, listingId, kind } });
+  }
+  revalidatePath("/home");
+  revalidatePath(`/listings/${listingId}`);
+  revalidatePath("/favorites");
+}
+
+export async function reportListingAction(formData: FormData) {
+  const user = await requireUser();
+  await prisma.report.create({
+    data: {
+      reporterId: user.id,
+      listingId: String(formData.get("listingId")),
+      type: String(formData.get("type")),
+      notes: String(formData.get("notes") || ""),
+      status: "OPEN",
+    },
+  });
+  revalidatePath("/admin");
+  return;
+}
+
+export async function blockUserAction(mutedUserId: string) {
+  const user = await requireUser();
+  await prisma.mute.upsert({
+    where: { userId_mutedUserId: { userId: user.id, mutedUserId } },
+    create: { userId: user.id, mutedUserId },
+    update: {},
+  });
+  revalidatePath("/messages");
+}
+
+export async function sendMessageAction(formData: FormData) {
+  const user = await requireUser();
+  const listingId = String(formData.get("listingId"));
+  const body = String(formData.get("body") || "").trim();
+  if (!body) return;
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing) return;
+  if (listing.status === "ON_HOLD") {
+    return;
+  }
+  const buyerId = user.role === "BUYER" ? user.id : String(formData.get("buyerId"));
+  const sellerId = listing.sellerId;
+  let thread = await prisma.thread.findUnique({
+    where: { listingId_buyerId: { listingId, buyerId } },
+  });
+  if (!thread) {
+    thread = await prisma.thread.create({
+      data: { listingId, buyerId, sellerId },
+    });
+  }
+  if (thread.frozen) {
+    return;
+  }
+  await prisma.message.create({
+    data: { threadId: thread.id, senderId: user.id, body },
+  });
+  revalidatePath("/messages");
+  revalidatePath(`/messages/${thread.id}`);
+}
+
+export async function saveVaultAction(formData: FormData) {
+  const user = await requireUser();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      pofOnFile: String(formData.get("pofOnFile")) === "on",
+      entityOnFile: String(formData.get("entityOnFile")) === "on",
+      w9OnFile: String(formData.get("w9OnFile")) === "on",
+      entityName: String(formData.get("entityName") || user.entityName || ""),
+    },
+  });
+  revalidatePath("/vault");
+}
+
+export async function deleteAccountAction() {
+  const user = await requireUser();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      deletedAt: new Date(),
+      email: `deleted-${user.id}@dealboard.invalid`,
+      name: "Deleted account",
+      phone: "",
+    },
+  });
+  await clearSession();
+  redirect("/");
+}
+
+export async function blacklistAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return;
+  const targetId = String(formData.get("userId"));
+  const note = String(formData.get("note") || "");
+  const target = await prisma.user.findUnique({ where: { id: targetId } });
+  if (!target) return;
+  await prisma.user.update({
+    where: { id: targetId },
+    data: {
+      blacklisted: true,
+      blacklistNote: `account=${target.id};entity=${target.entityName};phone=${target.phone};email=${target.email}; ${note}`,
+    },
+  });
+  revalidatePath("/admin");
+}
+
+export async function resolveReportAction(reportId: string) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return;
+  await prisma.report.update({
+    where: { id: reportId },
+    data: { status: "REVIEWED" },
+  });
+  revalidatePath("/admin");
+}
+
+export async function sendBlastAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "SELLER") return;
+  await prisma.blast.create({
+    data: {
+      sellerId: user.id,
+      listingId: String(formData.get("listingId") || "") || null,
+      message: String(formData.get("message") || ""),
+    },
+  });
+  revalidatePath("/seller");
+  return;
+}
+
+export async function startHotAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "SELLER" && user.role !== "ADMIN") return;
+  const listingId = String(formData.get("listingId") || "");
+  const { evaluateHot, hotPlan, isListingHot, lastHotEndedAt, hotCooldownUntil } = await import("./hot");
+  const plan = hotPlan(Number(formData.get("hours")));
+  if (!listingId || !plan) return;
+  const listing = await prisma.listing.findUnique({
+    where: { id: listingId },
+    include: {
+      seller: { include: { strikes: { select: { id: true } } } },
+      titleFile: { select: { id: true } },
+    },
+  });
+  if (!listing) return;
+  const sellerId = user.role === "ADMIN" ? listing.sellerId : user.id;
+  if (listing.sellerId !== sellerId) return;
+  const siblings = await prisma.listing.findMany({
+    where: { sellerId: listing.sellerId },
+    select: { id: true, hotUntil: true },
+  });
+  const now = new Date();
+  const gate = evaluateHot({
+    badge: listing.seller.badge,
+    strikeCount: listing.seller.strikes.length,
+    verified: listing.verified,
+    status: listing.status,
+    hasTitle: Boolean(listing.titleFile),
+    listingHot: isListingHot(listing, now),
+    sellerHasLiveHot: siblings.some((row) => row.id !== listing.id && isListingHot(row, now)),
+    cooldownUntil: hotCooldownUntil(lastHotEndedAt(siblings)),
+    now,
+  });
+  if (!gate.ok) return;
+  const hotUntil = new Date(now.getTime() + plan.hours * 60 * 60 * 1000);
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { hotUntil, hotHours: plan.hours },
+  });
+  await prisma.billingAdjustment.create({
+    data: {
+      sellerId: listing.sellerId,
+      amount: plan.dollars,
+      reason: `Hot ${plan.label} · ${listing.address}`,
+    },
+  });
+  await prisma.blast.create({
+    data: {
+      sellerId: listing.sellerId,
+      listingId,
+      message: `Hot ${plan.label} · ${listing.address} · A/B only`,
+    },
+  });
+  revalidatePath("/seller");
+  revalidatePath("/home");
+  revalidatePath("/admin");
+  revalidatePath(`/listings/${listingId}`);
+}
+
+export async function createListingAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "SELLER" && user.role !== "ADMIN") {
+    redirect("/home");
+  }
+  const sellerId = user.role === "ADMIN" ? "user_seller" : user.id;
+  const walkthrough = String(formData.get("hasWalkthrough")) === "on";
+  const photos = [PHOTO_NEW];
+  const assignmentPrice = Number(formData.get("assignmentPrice"));
+  const sellerArv = Number(formData.get("sellerArv") || 0) || null;
+  const liveAvm = Boolean(process.env.RENTCAST_API_KEY || process.env.REAPI_API_KEY);
+  const explicitAvm = Number(formData.get("platformAvm") || 0) || null;
+  const platformAvm =
+    explicitAvm ||
+    (liveAvm ? null : sellerArv || Math.round(assignmentPrice * 1.35));
+  const expiresAt = new Date(String(formData.get("contractExpiresAt")));
+  if (Number.isNaN(expiresAt.getTime())) {
+    throw new Error("Contract expiration is required");
+  }
+  const listing = await prisma.listing.create({
+    data: {
+      id: `listing_${Date.now()}`,
+      sellerId,
+      address: String(formData.get("address")),
+      city: String(formData.get("city") || "Noblesville"),
+      state: "IN",
+      zip: String(formData.get("zip") || "46060"),
+      lat: NOBLESVILLE_SQUARE.lat + 0.01,
+      lng: NOBLESVILLE_SQUARE.lng - 0.01,
+      assignmentPrice,
+      originalContractPrice: Number(formData.get("originalContractPrice")),
+      sellerArv,
+      sellerRepairs: Number(formData.get("sellerRepairs") || 0) || null,
+      platformAvm,
+      avmSource: liveAvm ? "live" : "mock",
+      beds: Number(formData.get("beds")),
+      baths: Number(formData.get("baths")),
+      sf: Number(formData.get("sf")),
+      occupancy: parseOccupancy(formData.get("occupancy")),
+      access: String(formData.get("access") || "TBD"),
+      contractExpiresAt: expiresAt,
+      knownIssues: String(formData.get("knownIssues") || ""),
+      needsWorkJson: needsWorkJson(formData.getAll("needsWork")),
+      photosJson: JSON.stringify(photos),
+      hasWalkthrough: walkthrough,
+      walkthroughUrl: walkthrough ? "/walkthrough/new.mp4" : null,
+      contractUploaded: String(formData.get("contractUploaded")) === "on",
+      verified: false,
+      workLevel: parseWorkLevel(formData.get("workLevel")),
+      rehabEstimate: Number(formData.get("rehabEstimate") || 0),
+      offerFloorPct: Number(formData.get("offerFloorPct") || (await getBoardLevers()).defaultOfferFloorPct),
+      titleDeposit: clampListingDeposit(
+        Number(formData.get("titleDeposit")),
+        await getPlatformTitleDeposit(),
+      ),
+      status: "DRAFT",
+      liveStartedAt: new Date(),
+    },
+  });
+  console.log("createListingAction persisted", listing.id, listing.address, listing.sellerId);
+  const boxes = await prisma.buyBox.findMany();
+  for (const box of boxes) {
+    const { gradeAndCache } = await import("./grade-listing");
+    await gradeAndCache(listing.id, box.id);
+  }
+  revalidatePath("/seller");
+  revalidatePath("/home");
+  redirect("/seller");
+}
+
+export async function updateListingOccupancyAction(formData: FormData) {
+  const user = await requireUser();
+  const listingId = String(formData.get("listingId") || "");
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || (listing.sellerId !== user.id && user.role !== "ADMIN")) return;
+  const data: { occupancy?: string; workLevel?: string; needsWorkJson?: string } = {};
+  if (formData.has("occupancy")) data.occupancy = parseOccupancy(formData.get("occupancy"));
+  if (formData.has("workLevel")) data.workLevel = parseWorkLevel(formData.get("workLevel"));
+  if (formData.has("needsWorkSent")) data.needsWorkJson = needsWorkJson(formData.getAll("needsWork"));
+  if (!Object.keys(data).length) return;
+  await prisma.listing.update({
+    where: { id: listingId },
+    data,
+  });
+  revalidatePath("/seller");
+  revalidatePath("/home");
+  revalidatePath(`/listings/${listingId}`);
+}
+
+export async function workAgainAction(listingId: string, toUserId: string, yes: boolean) {
+  const user = await requireUser();
+  await prisma.workAgain.create({
+    data: { fromUserId: user.id, toUserId, listingId, yes },
+  });
+  revalidatePath("/owned");
+}
+
+export async function incrementViewAction(listingId: string) {
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { views: { increment: 1 } },
+  });
+}
+
+export async function getCurrentUser() {
+  return getSessionUser();
+}
