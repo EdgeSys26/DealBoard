@@ -13,15 +13,6 @@ const SELLER_TABS = [
   { id: "billing", href: "/seller?tab=billing", label: "Billing" },
 ];
 
-const BUYER_TABS = [
-  { id: "matches", href: "/home?tab=matches", label: "Matches" },
-  { id: "held", href: "/home?tab=held", label: "Held" },
-  { id: "offers", href: "/home?tab=offers", label: "Offers" },
-  { id: "title", href: "/home?tab=title", label: "Title" },
-  { id: "saved", href: "/home?tab=saved", label: "Saved" },
-  { id: "hidden", href: "/home?tab=hidden", label: "Hidden" },
-];
-
 const ADMIN_TABS = [
   { id: "dashboard", href: "/admin?tab=dashboard", label: "Dashboard" },
   { id: "people", href: "/admin?tab=people", label: "People" },
@@ -46,8 +37,6 @@ export function ChromeBar({
   const path = usePathname();
   const params = useSearchParams();
   const tab = params.get("tab") ?? "";
-  const seller = path === "/seller" || path.startsWith("/seller/");
-  const buyer = path === "/home";
   const admin = path === "/admin";
   const sellerTabs = SELLER_TABS.map((item) => {
     if (item.id === "offers" && sellerBadges.newOfferCount > 0 && tab !== "offers") {
@@ -61,22 +50,16 @@ export function ChromeBar({
   const tabs =
     path === "/seller" || path === "/seller/billing"
       ? sellerTabs
-      : buyer
-        ? BUYER_TABS
-        : admin
-          ? ADMIN_TABS
-          : null;
+      : admin
+        ? ADMIN_TABS
+        : null;
   const active = admin
     ? tab === "people" || tab === "listings" || tab === "billing" || tab === "queue"
       ? tab
       : "dashboard"
-    : seller
-      ? tab === "offers" || tab === "title" || tab === "billing"
-        ? tab
-        : "listings"
-      : tab === "held" || tab === "offers" || tab === "title" || tab === "saved" || tab === "hidden"
-        ? tab
-        : "matches";
+    : tab === "offers" || tab === "title" || tab === "billing"
+      ? tab
+      : "listings";
 
   return (
     <header className="dash-chrome">

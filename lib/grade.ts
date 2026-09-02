@@ -154,3 +154,18 @@ export function leftover(
 export function isHomeVisible(letter: Letter): boolean {
   return letter === "A+" || letter === "A" || letter === "B";
 }
+
+export function isInArea(
+  listing: { lat: number; lng: number },
+  box: { lat: number; lng: number; radiusMiles: number },
+): boolean {
+  return haversineMiles(box, listing) <= box.radiusMiles + 0.05;
+}
+
+/** Pushes page A/B (or A only). Never C, D, or no-fit. */
+export function isAlertLetter(letter: Letter, alertMode = "A_AND_B"): boolean {
+  if (alertMode === "APP_ONLY") return false;
+  if (letter === "A+" || letter === "A") return true;
+  if (letter === "B") return alertMode !== "A_ONLY";
+  return false;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gradeListing, leftover } from "./grade";
+import { gradeListing, isAlertLetter, isInArea, leftover } from "./grade";
 import { NOBLESVILLE_SQUARE } from "./types";
 import { minOfferPrice, assertOfferFloor, tightenFloorPct } from "./offer-floor";
 import { daysBetween, haversineMiles } from "./geo";
@@ -128,5 +128,24 @@ describe("offer floor", () => {
   it("lets the seller tighten but not loosen the floor", () => {
     expect(tightenFloorPct(10, 5)).toBe(5);
     expect(tightenFloorPct(5, 10)).toBe(5);
+  });
+});
+
+describe("alerts stay A/B", () => {
+  it("never pages C, D, or no-fit", () => {
+    expect(isAlertLetter("C")).toBe(false);
+    expect(isAlertLetter("D")).toBe(false);
+    expect(isAlertLetter("NO_FIT")).toBe(false);
+    expect(isAlertLetter("B")).toBe(true);
+    expect(isAlertLetter("B", "A_ONLY")).toBe(false);
+    expect(isAlertLetter("A")).toBe(true);
+    expect(isAlertLetter("A+", "A_ONLY")).toBe(true);
+  });
+});
+
+describe("all in area", () => {
+  it("keeps Harbour inside the 8-mile circle even when it is no-fit", () => {
+    expect(isInArea(harbour, demoBox)).toBe(true);
+    expect(isInArea({ lat: 41.5, lng: -87.7 }, demoBox)).toBe(false);
   });
 });

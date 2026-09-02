@@ -83,6 +83,7 @@ export default async function BuyBoxPage() {
               <option value="A_ONLY">A only</option>
               <option value="APP_ONLY">App only</option>
             </select>
+            <p className="text-xs text-muted">Pushes stay A/B. C and D never page you.</p>
           </section>
 
           <button className="btn-primary" type="submit">
