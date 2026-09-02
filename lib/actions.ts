@@ -82,6 +82,15 @@ export async function saveBuyBoxAction(formData: FormData) {
   }
 
   const existing = await prisma.buyBox.findFirst({ where: { userId: user.id } });
+  const { citiesIntersectingCircle, mergeExcludedCities, parseExcludedCities } = await import("./area-cities");
+  const chipCities = citiesIntersectingCircle(
+    { lat: NOBLESVILLE_SQUARE.lat, lng: NOBLESVILLE_SQUARE.lng },
+    radiusMiles,
+  );
+  const selectedCities = formData.getAll("cities").map(String);
+  const excludedCities = JSON.stringify(
+    mergeExcludedCities(parseExcludedCities(existing?.excludedCities), chipCities, selectedCities),
+  );
   const data = {
     userId: user.id,
     centerLabel,
@@ -95,6 +104,7 @@ export async function saveBuyBoxAction(formData: FormData) {
     workLevels: JSON.stringify(workLevels),
     maxRehab: maxRehabRaw ? Number(maxRehabRaw) : null,
     alertMode,
+    excludedCities,
   };
   const box = existing
     ? await prisma.buyBox.update({ where: { id: existing.id }, data })
@@ -103,6 +113,28 @@ export async function saveBuyBoxAction(formData: FormData) {
   revalidatePath("/home");
   revalidatePath("/buy-box");
   redirect("/buy-box");
+}
+
+export async function toggleCityFilterAction(formData: FormData) {
+  const user = await requireUser();
+  const city = String(formData.get("city") || "").trim();
+  if (!city) return;
+  const box = await prisma.buyBox.findFirst({ where: { userId: user.id } });
+  if (!box) return;
+  const { parseExcludedCities } = await import("./area-cities");
+  const excluded = parseExcludedCities(box.excludedCities);
+  const next = excluded.includes(city)
+    ? excluded.filter((item) => item !== city)
+    : [...excluded, city];
+  await prisma.buyBox.update({
+    where: { id: box.id },
+    data: { excludedCities: JSON.stringify(next) },
+  });
+  revalidatePath("/home");
+  revalidatePath("/buy-box");
+  if (String(formData.get("view") || "") === "all") {
+    redirect("/home?view=all");
+  }
 }
 
 export async function toggleLookingAction(formData?: FormData) {
