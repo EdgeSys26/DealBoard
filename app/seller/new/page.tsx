@@ -34,7 +34,13 @@ export default async function NewListingPage() {
           <label className="field">Beds<input name="beds" type="number" defaultValue={3} /></label>
           <label className="field">Baths<input name="baths" type="number" step="0.5" defaultValue={2} /></label>
           <label className="field">Sq ft<input name="sf" type="number" defaultValue={1200} /></label>
-          <label className="field">Occupancy<input name="occupancy" defaultValue="Vacant" /></label>
+          <label className="field">Occupancy
+            <select name="occupancy" defaultValue="Vacant">
+              <option value="Owner occupied">Owner occupied</option>
+              <option value="Tenant">Tenant</option>
+              <option value="Vacant">Vacant</option>
+            </select>
+          </label>
           <label className="field">Access<input name="access" defaultValue="Lockbox" /></label>
           <label className="field">Contract expiration<input name="contractExpiresAt" type="date" required /></label>
           <label className="field">Work level

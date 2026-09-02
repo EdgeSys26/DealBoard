@@ -108,6 +108,15 @@ export async function ensureBoardSettings() {
   } catch {
     // Demo rows are optional if users are not seeded yet.
   }
+
+  const { parseOccupancy } = await import("./occupancy");
+  const occRows = await prisma.listing.findMany({ select: { id: true, occupancy: true } });
+  for (const row of occRows) {
+    const occupancy = parseOccupancy(row.occupancy);
+    if (occupancy !== row.occupancy) {
+      await prisma.listing.update({ where: { id: row.id }, data: { occupancy } });
+    }
+  }
 }
 
 function clampInt(n: number, fallback: number, min = 1) {
