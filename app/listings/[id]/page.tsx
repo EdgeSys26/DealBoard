@@ -23,6 +23,7 @@ import { usd } from "@/lib/money";
 import { BADGE_LABEL, WORK_LEVELS, WORK_LEVEL_LABEL, type WorkLevel } from "@/lib/types";
 import { CheckRows } from "@/components/CheckRows";
 import { NEEDS_WORK, parseNeedsWork } from "@/lib/needs-work";
+import { ListingPhoto } from "@/components/ListingPhoto";
 import { isListingHot } from "@/lib/hot";
 import { listingDaysCopy } from "@/lib/seller-board";
 import { formatSlot } from "@/lib/dates";
@@ -67,8 +68,7 @@ export default async function ListingPage({
       <main className="flex-1 px-4 pb-6 space-y-3">
         <div className="card overflow-hidden">
           <div className="relative h-52 bg-canvas">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photos[0]} alt="" className="h-full w-full object-cover" />
+            <ListingPhoto src={photos[0]} className="h-full w-full object-cover" />
             <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
           </div>
           <div className="p-4">
