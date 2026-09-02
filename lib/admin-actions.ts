@@ -84,6 +84,17 @@ export async function setPlatformLeversAction(formData: FormData) {
   revalidatePath("/home");
 }
 
+export async function strikeUserAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return;
+  const targetId = String(formData.get("userId") || "");
+  const reason = String(formData.get("reason") || "Sold deal review").trim() || "Sold deal review";
+  const target = await prisma.user.findUnique({ where: { id: targetId } });
+  if (!target || target.role === "ADMIN") return;
+  await prisma.strike.create({ data: { userId: targetId, reason } });
+  revalidatePath("/admin");
+}
+
 export async function addBillingAdjustmentAction(formData: FormData) {
   const user = await requireUser();
   if (user.role !== "ADMIN") return;

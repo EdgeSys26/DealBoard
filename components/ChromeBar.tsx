@@ -23,7 +23,7 @@ const BUYER_TABS = [
 ];
 
 const ADMIN_TABS = [
-  { id: "levers", href: "/admin?tab=levers", label: "Levers" },
+  { id: "dashboard", href: "/admin?tab=dashboard", label: "Dashboard" },
   { id: "people", href: "/admin?tab=people", label: "People" },
   { id: "listings", href: "/admin?tab=listings", label: "Listings" },
   { id: "billing", href: "/admin?tab=billing", label: "Billing" },
@@ -69,7 +69,7 @@ export function ChromeBar({
   const active = admin
     ? tab === "people" || tab === "listings" || tab === "billing" || tab === "queue"
       ? tab
-      : "levers"
+      : "dashboard"
     : seller
       ? tab === "offers" || tab === "title" || tab === "billing"
         ? tab
