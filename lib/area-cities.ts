@@ -10,6 +10,9 @@ export const AREA_CITIES = [
   { name: "Cicero", lat: 40.1239, lng: -86.0144, spread: 2 },
   { name: "Whitestown", lat: 39.9973, lng: -86.3455, spread: 2 },
   { name: "Sheridan", lat: 40.135, lng: -86.2205, spread: 2 },
+  { name: "Arcadia", lat: 40.1742, lng: -86.0214, spread: 1.5 },
+  { name: "McCordsville", lat: 39.9064, lng: -85.9208, spread: 2 },
+  { name: "Fortville", lat: 39.9323, lng: -85.8472, spread: 2 },
   { name: "Fillmore", lat: 39.7356, lng: -86.7536, spread: 2 },
 ] as const;
 
