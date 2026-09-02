@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { gradeAndCache } from "./grade-listing";
 import { isHomeVisible } from "./grade";
+import { cityAllowed, parseExcludedCities } from "./area-cities";
 import { priceChangeBody } from "./money";
 
 export { priceChangeBody };
@@ -32,6 +33,7 @@ export async function notifyAskingPriceChange(
     });
     for (const box of boxes) {
       if (box.user.role !== "BUYER") continue;
+      if (!cityAllowed(listing.city, parseExcludedCities(box.excludedCities))) continue;
       const grade = await gradeAndCache(listingId, box.id);
       if (grade && isHomeVisible(grade.letter)) buyerIds.add(box.userId);
     }

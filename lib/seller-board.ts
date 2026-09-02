@@ -2,6 +2,33 @@ import { daysBetween } from "./geo";
 
 export const EXPIRY_WARN_DAYS = 3;
 
+export const SELLER_STATUS_FILTERS = [
+  { id: "all", label: "All" },
+  { id: "active", label: "Active" },
+  { id: "pending", label: "Pending" },
+  { id: "hold", label: "On hold" },
+  { id: "draft", label: "Draft" },
+  { id: "sold", label: "Sold" },
+] as const;
+
+export type SellerStatusFilter = (typeof SELLER_STATUS_FILTERS)[number]["id"];
+
+export function parseSellerStatusFilter(raw: string | undefined): SellerStatusFilter {
+  if (raw === "active" || raw === "pending" || raw === "hold" || raw === "draft" || raw === "sold") {
+    return raw;
+  }
+  return "all";
+}
+
+export function listingMatchesStatusFilter(status: string, filter: SellerStatusFilter) {
+  if (filter === "all") return true;
+  if (filter === "active") return status === "ACTIVE";
+  if (filter === "pending") return status === "UNDER_CONTRACT";
+  if (filter === "hold") return status === "ON_HOLD";
+  if (filter === "draft") return status === "DRAFT";
+  return status === "ASSIGNED";
+}
+
 export function listingDaysLeft(expiresAt: Date, now = new Date()) {
   return Math.max(0, daysBetween(now, expiresAt));
 }

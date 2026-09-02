@@ -5,6 +5,7 @@ import { saveBuyBoxAction } from "@/lib/actions";
 import { TopBar } from "@/components/TopBar";
 import { BuyerNav } from "@/components/Nav";
 import { NOBLESVILLE_SQUARE } from "@/lib/types";
+import { citiesIntersectingCircle, parseExcludedCities } from "@/lib/area-cities";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,14 @@ export default async function BuyBoxPage() {
   if (!user) redirect("/");
   const box = await getBuyBox(user.id);
   const levels = box ? (JSON.parse(box.workLevels) as string[]) : ["MEDIUM", "FULL_GUT"];
+  const chipCities = citiesIntersectingCircle(
+    {
+      lat: box?.lat ?? NOBLESVILLE_SQUARE.lat,
+      lng: box?.lng ?? NOBLESVILLE_SQUARE.lng,
+    },
+    box?.radiusMiles ?? 8,
+  );
+  const excludedCities = parseExcludedCities(box?.excludedCities);
 
   return (
     <div className="min-h-svh flex flex-col">
@@ -33,6 +42,25 @@ export default async function BuyBoxPage() {
               Radius (miles)
               <input name="radiusMiles" type="number" step="0.5" defaultValue={box?.radiusMiles ?? 8} />
             </label>
+            <p className="text-sm font-medium">Cities in this circle</p>
+            <div className="city-chips">
+              {chipCities.map((city) => (
+                <label key={city} className="chip" data-on={!excludedCities.includes(city) ? "true" : "false"}>
+                  <input
+                    type="checkbox"
+                    name="cities"
+                    value={city}
+                    defaultChecked={!excludedCities.includes(city)}
+                    className="w-auto"
+                  />
+                  {city}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted">
+              Default all on. Deselect a city to hide it from Home and this box. Alerts stay A/B only
+              inside selected cities.
+            </p>
           </section>
 
           <section className="card p-4 space-y-3">
