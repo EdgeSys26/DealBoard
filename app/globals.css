@@ -141,9 +141,175 @@ body {
 
 .lever-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 10px 12px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px 10px;
   align-items: end;
+}
+
+.admin-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 8px;
+}
+
+.admin-tile {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.admin-tile.wide {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 720px) {
+  .admin-tile.wide {
+    grid-column: span 2;
+  }
+}
+
+.admin-tile .k {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.admin-tile .v {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-top: 4px;
+}
+
+.admin-tile .mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 6px;
+}
+
+.admin-tile .mini span {
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.admin-tile .mini b {
+  font-weight: 800;
+}
+
+.settings-card .field input {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.bill-list {
+  border-top: 1px solid var(--line);
+}
+
+.bill-head,
+.bill-row > summary {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.4fr) minmax(110px, 1fr) 72px 72px 72px 16px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.bill-head {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.bill-row {
+  border-top: 1px solid var(--line);
+}
+
+.bill-row > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.bill-row > summary::-webkit-details-marker {
+  display: none;
+}
+
+.bill-row[open] > summary,
+.bill-row > summary:hover {
+  background: color-mix(in srgb, var(--accent) 5%, var(--card));
+}
+
+.bill-chevron {
+  color: var(--muted);
+  font-size: 11px;
+  justify-self: end;
+}
+
+.bill-panel {
+  padding: 0 12px 10px;
+}
+
+.bill-panel form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 6px;
+}
+
+.bill-panel input[name="amount"] {
+  width: 76px;
+}
+
+.bill-panel select[name="sign"] {
+  width: 56px;
+}
+
+.bill-panel input[name="reason"] {
+  width: 180px;
+  flex: 1 1 140px;
+}
+
+.sold-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.sold-menu {
+  position: relative;
+}
+
+.sold-menu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.sold-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sold-menu-panel {
+  position: absolute;
+  right: 0;
+  z-index: 8;
+  min-width: 140px;
+  margin-top: 4px;
+  padding: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--ink) 12%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .dash-chrome {
