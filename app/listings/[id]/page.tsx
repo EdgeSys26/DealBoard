@@ -57,6 +57,8 @@ export default async function ListingPage({
   const { listing, grade, myHold, myOffer, accepted, floor, leftoverNow, titleDeposit, photos, isHidden, isSaved, showSellerPhone, showWire } = data;
   const letter = grade?.letter ?? "—";
   const otherHold = listing.holds.find((h) => h.buyerId !== user.id);
+  const workLabel = WORK_LEVEL_LABEL[listing.workLevel as WorkLevel];
+  const needsWork = parseNeedsWork(listing.needsWorkJson);
 
   return (
     <div className="min-h-svh flex flex-col">
@@ -83,8 +85,7 @@ export default async function ListingPage({
               {listing.city}, {listing.state} {listing.zip}
             </p>
             <p className="text-sm mt-2">
-              {listing.beds} bd · {listing.baths} ba · {listing.sf} sf ·{" "}
-              {WORK_LEVEL_LABEL[listing.workLevel as WorkLevel]}
+              {listing.beds} bd · {listing.baths} ba · {listing.sf} sf
             </p>
             {!listing.verified && (user.role === "SELLER" || user.role === "ADMIN") ? (
               <p className="text-sm text-muted mt-2">
@@ -169,7 +170,10 @@ export default async function ListingPage({
                 </form>
               </>
             ) : (
-              <Row label="Occupancy" value={parseOccupancy(listing.occupancy)} />
+              <>
+                <Row label="Occupancy" value={parseOccupancy(listing.occupancy)} />
+                <Row label="Work" value={workLabel} />
+              </>
             )}
             <Row label="Access" value={listing.access} />
             <Row
@@ -189,32 +193,38 @@ export default async function ListingPage({
         <section className="card p-4 known-issues">
           <p className="font-semibold">Known issues</p>
           <p className="text-sm mt-1">{listing.knownIssues?.trim() ? listing.knownIssues : "None listed."}</p>
-          {user.role === "BUYER" ? (
-            parseNeedsWork(listing.needsWorkJson).length ? (
-              <div className="needs-chips">
-                {parseNeedsWork(listing.needsWorkJson).map((item) => (
-                  <span key={item} className="chip occupancy-chip">
-                    {item}
-                  </span>
-                ))}
-              </div>
-            ) : null
-          ) : user.role === "SELLER" || user.role === "ADMIN" ? (
-            <form action={updateListingOccupancyAction} className="mt-3 space-y-2">
+        </section>
+
+        {user.role === "BUYER" && needsWork.length ? (
+          <section className="card p-4 needs-work">
+            <p className="font-semibold">Needs work</p>
+            <div className="needs-chips">
+              {needsWork.map((item) => (
+                <span key={item} className="chip occupancy-chip">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {user.role === "SELLER" || user.role === "ADMIN" ? (
+          <section className="card p-4 needs-work">
+            <form action={updateListingOccupancyAction} className="space-y-2">
               <input type="hidden" name="listingId" value={listing.id} />
               <input type="hidden" name="needsWorkSent" value="1" />
-              <p className="text-sm font-semibold">Needs work</p>
+              <p className="font-semibold">Needs work</p>
               <CheckRows
                 name="needsWork"
-                checked={parseNeedsWork(listing.needsWorkJson)}
+                checked={needsWork}
                 options={NEEDS_WORK.map((value) => ({ value, label: value }))}
               />
               <button className="listing-save" type="submit">
                 Save
               </button>
             </form>
-          ) : null}
-        </section>
+          </section>
+        ) : null}
 
         <section className="card p-4">
           <p className="font-semibold mb-2">Offer + rehab vs AVM leftover</p>
