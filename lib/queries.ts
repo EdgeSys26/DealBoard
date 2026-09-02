@@ -8,6 +8,7 @@ import { listingPhotos } from "./listing-photos";
 import { getBoardLevers, getPlatformTitleDeposit, type BoardLevers } from "./settings";
 import { isUnseenSellerOffer, listingExpiresSoon, sellerBoardStats } from "./seller-board";
 import { isListingHot } from "./hot";
+import { citiesIntersectingCircle, cityAllowed, parseExcludedCities } from "./area-cities";
 import { BILLING_BASE, type Letter } from "./types";
 import type { SessionUser } from "./auth";
 import type { GradeResult } from "./types";
@@ -43,12 +44,17 @@ export async function getHomeFeed(user: SessionUser, view: FeedView = "ab") {
   const myOffers = await prisma.offer.findMany({ where: { buyerId: user.id } });
   const offerByListing = new Map(myOffers.map((o) => [o.listingId, o]));
   const favoriteSellerIds = new Set(favs.map((f) => f.listing.sellerId));
+  const excludedCities = parseExcludedCities(box?.excludedCities);
+  const cityChips = box
+    ? citiesIntersectingCircle({ lat: box.lat, lng: box.lng }, box.radiusMiles)
+    : [];
 
   const cards = [];
   for (const listing of listings) {
     if (listing.status !== "ACTIVE" || !listing.verified) continue;
     if (mutedIds.has(listing.sellerId)) continue;
     if (hiddenIds.has(listing.id)) continue;
+    if (!cityAllowed(listing.city, excludedCities)) continue;
     if (view === "all" && box && !isInArea(listing, box)) continue;
     let grade: GradeResult | null = null;
     if (box) {
@@ -72,7 +78,13 @@ export async function getHomeFeed(user: SessionUser, view: FeedView = "ab") {
     if (aFav !== bFav) return bFav - aFav;
     return (b.grade?.score ?? 0) - (a.grade?.score ?? 0);
   });
-  return { box, cards, looking: user.lookingStatus === "LOOKING" };
+  return {
+    box,
+    cards,
+    looking: user.lookingStatus === "LOOKING",
+    cityChips,
+    excludedCities,
+  };
 }
 
 export async function getBuyerBoard(user: SessionUser, view: FeedView = "ab") {

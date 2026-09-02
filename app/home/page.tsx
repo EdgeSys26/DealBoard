@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { displayGradeLabel, getBuyerBoard, letterTone, parseFeedView } from "@/lib/queries";
 import { toggleLookingAction } from "@/lib/actions";
+import { CityChipRow } from "@/components/CityChipRow";
 import {
   acceptCounterAction,
   declineCounterAction,
@@ -45,10 +46,8 @@ export default async function HomePage({
   const params = await searchParams;
   const tab = buyerTab(params.tab);
   const feedView = parseFeedView(params.view);
-  const { cards, looking, holds, offers, saved, savedSellers, hidden } = await getBuyerBoard(
-    user,
-    feedView,
-  );
+  const { cards, looking, holds, offers, saved, savedSellers, hidden, cityChips, excludedCities } =
+    await getBuyerBoard(user, feedView);
   const savedPane = params.pane === "sellers" ? "sellers" : "listings";
   const titleRows = offers.filter((o) => o.status === "ACCEPTED");
 
@@ -89,6 +88,7 @@ export default async function HomePage({
                   </Link>
                 </div>
               </div>
+              <CityChipRow cities={cityChips} excluded={excludedCities} view={feedView} />
             </div>
 
             {user.quietHours ? (
