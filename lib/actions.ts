@@ -18,6 +18,7 @@ import { HOLD_MS, NOBLESVILLE_SQUARE, type AlertMode, type WorkLevel } from "./t
 import { clampListingDeposit, listingTitleDeposit } from "./deposit";
 import { getBoardLevers, getPlatformTitleDeposit } from "./settings";
 import { PHOTO_NEW } from "./listing-photos";
+import { parseOccupancy } from "./occupancy";
 
 export async function loginAction(formData: FormData) {
   await ensureDemoDb();
@@ -673,7 +674,7 @@ export async function createListingAction(formData: FormData) {
       beds: Number(formData.get("beds")),
       baths: Number(formData.get("baths")),
       sf: Number(formData.get("sf")),
-      occupancy: String(formData.get("occupancy") || "Vacant"),
+      occupancy: parseOccupancy(formData.get("occupancy")),
       access: String(formData.get("access") || "TBD"),
       contractExpiresAt: expiresAt,
       knownIssues: String(formData.get("knownIssues") || ""),
@@ -702,6 +703,20 @@ export async function createListingAction(formData: FormData) {
   revalidatePath("/seller");
   revalidatePath("/home");
   redirect("/seller");
+}
+
+export async function updateListingOccupancyAction(formData: FormData) {
+  const user = await requireUser();
+  const listingId = String(formData.get("listingId") || "");
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
+  if (!listing || (listing.sellerId !== user.id && user.role !== "ADMIN")) return;
+  await prisma.listing.update({
+    where: { id: listingId },
+    data: { occupancy: parseOccupancy(formData.get("occupancy")) },
+  });
+  revalidatePath("/seller");
+  revalidatePath("/home");
+  revalidatePath(`/listings/${listingId}`);
 }
 
 export async function workAgainAction(listingId: string, toUserId: string, yes: boolean) {
