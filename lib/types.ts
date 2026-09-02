@@ -7,8 +7,12 @@ export type Badge = (typeof BADGES)[number];
 export const WORK_LEVELS = [
   "TURNKEY",
   "PAINT_CARPET",
+  "LIGHT_COSMETIC",
   "MEDIUM",
+  "HEAVY",
   "FULL_GUT",
+  "FIRE_INSURANCE",
+  "LAND_TEARDOWN",
 ] as const;
 export type WorkLevel = (typeof WORK_LEVELS)[number];
 
@@ -75,9 +79,28 @@ export type ListingGradeInput = {
 export const WORK_LEVEL_LABEL: Record<WorkLevel, string> = {
   TURNKEY: "Turnkey",
   PAINT_CARPET: "Paint & carpet",
+  LIGHT_COSMETIC: "Light cosmetic",
   MEDIUM: "Medium",
+  HEAVY: "Heavy",
   FULL_GUT: "Full gut",
+  FIRE_INSURANCE: "Fire / insurance",
+  LAND_TEARDOWN: "Land / teardown",
 };
+
+export function parseWorkLevel(raw: unknown): WorkLevel {
+  const value = String(raw || "");
+  return (WORK_LEVELS as readonly string[]).includes(value) ? (value as WorkLevel) : "MEDIUM";
+}
+
+export function parseWorkLevels(raw: unknown[]): WorkLevel[] {
+  const allowed = new Set<string>(WORK_LEVELS);
+  const next: WorkLevel[] = [];
+  for (const item of raw) {
+    const value = String(item || "");
+    if (allowed.has(value) && !next.includes(value as WorkLevel)) next.push(value as WorkLevel);
+  }
+  return next;
+}
 
 export const STATUS_LABEL: Record<ListingStatus, string> = {
   DRAFT: "Draft",

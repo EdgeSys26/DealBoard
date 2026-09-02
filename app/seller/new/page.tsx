@@ -5,6 +5,9 @@ import { getBoardLevers } from "@/lib/settings";
 import { TopBar } from "@/components/TopBar";
 import { SellerNav } from "@/components/Nav";
 import { usd } from "@/lib/money";
+import { CheckRows } from "@/components/CheckRows";
+import { WORK_LEVELS, WORK_LEVEL_LABEL } from "@/lib/types";
+import { NEEDS_WORK } from "@/lib/needs-work";
 
 export const dynamic = "force-dynamic";
 
@@ -45,10 +48,11 @@ export default async function NewListingPage() {
           <label className="field">Contract expiration<input name="contractExpiresAt" type="date" required /></label>
           <label className="field">Work level
             <select name="workLevel" defaultValue="MEDIUM">
-              <option value="TURNKEY">Turnkey</option>
-              <option value="PAINT_CARPET">Paint & carpet</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="FULL_GUT">Full gut</option>
+              {WORK_LEVELS.map((value) => (
+                <option key={value} value={value}>
+                  {WORK_LEVEL_LABEL[value]}
+                </option>
+              ))}
             </select>
           </label>
           <label className="field">
@@ -79,6 +83,12 @@ export default async function NewListingPage() {
           </p>
           <label className="field">Our rehab guess<input name="rehabEstimate" type="number" defaultValue={15000} /></label>
           <label className="field">Known issues<textarea name="knownIssues" rows={3} /></label>
+          <p className="text-sm font-semibold">Needs work</p>
+          <CheckRows
+            name="needsWork"
+            checked={[]}
+            options={NEEDS_WORK.map((value) => ({ value, label: value }))}
+          />
           <label className="flex gap-2 text-sm font-medium">
             <input name="hasWalkthrough" type="checkbox" defaultChecked className="w-auto" />
             30s walkthrough uploaded

@@ -4,10 +4,19 @@ import { getBuyBox } from "@/lib/queries";
 import { saveBuyBoxAction } from "@/lib/actions";
 import { TopBar } from "@/components/TopBar";
 import { BuyerNav } from "@/components/Nav";
-import { NOBLESVILLE_SQUARE } from "@/lib/types";
+import { CheckRows } from "@/components/CheckRows";
+import { NOBLESVILLE_SQUARE, WORK_LEVELS, WORK_LEVEL_LABEL } from "@/lib/types";
 import { citiesIntersectingCircle, parseExcludedCities } from "@/lib/area-cities";
 
 export const dynamic = "force-dynamic";
+
+function SectionSave() {
+  return (
+    <button className="btn-secondary buybox-save" type="submit">
+      Save
+    </button>
+  );
+}
 
 export default async function BuyBoxPage() {
   const user = await getSessionUser();
@@ -26,10 +35,13 @@ export default async function BuyBoxPage() {
   return (
     <div className="min-h-svh flex flex-col">
       <TopBar user={user} title="Buy box" />
-      <main className="flex-1 px-4 pb-6">
-        <form action={saveBuyBoxAction} className="space-y-4">
-          <section className="card p-4 space-y-3">
-            <p className="font-semibold">1. Where</p>
+      <main className="flex-1 px-4 pb-2 buybox-page">
+        <form action={saveBuyBoxAction} className="buybox-form">
+          <section className="card buybox-section">
+            <div className="buybox-section-head">
+              <p className="font-semibold">1. Where</p>
+              <SectionSave />
+            </div>
             <label className="field">
               Pin or zip
               <input name="centerLabel" defaultValue={box?.centerLabel ?? NOBLESVILLE_SQUARE.label} />
@@ -63,8 +75,11 @@ export default async function BuyBoxPage() {
             </p>
           </section>
 
-          <section className="card p-4 space-y-3">
-            <p className="font-semibold">2. Price</p>
+          <section className="card buybox-section">
+            <div className="buybox-section-head">
+              <p className="font-semibold">2. Price</p>
+              <SectionSave />
+            </div>
             <label className="field">
               Max assignment
               <input name="maxAssignmentPrice" type="number" defaultValue={box?.maxAssignmentPrice ?? 250000} />
@@ -79,33 +94,27 @@ export default async function BuyBoxPage() {
             </label>
           </section>
 
-          <section className="card p-4 space-y-3">
-            <p className="font-semibold">3. Work</p>
-            {[
-              ["TURNKEY", "Turnkey"],
-              ["PAINT_CARPET", "Paint & carpet"],
-              ["MEDIUM", "Medium"],
-              ["FULL_GUT", "Full gut"],
-            ].map(([value, label]) => (
-              <label key={value} className="flex items-center gap-2 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  name="workLevels"
-                  value={value}
-                  defaultChecked={levels.includes(value)}
-                  className="w-auto"
-                />
-                {label}
-              </label>
-            ))}
+          <section className="card buybox-section">
+            <div className="buybox-section-head">
+              <p className="font-semibold">3. I&apos;ll take</p>
+              <SectionSave />
+            </div>
+            <CheckRows
+              name="workLevels"
+              checked={levels}
+              options={WORK_LEVELS.map((value) => ({ value, label: WORK_LEVEL_LABEL[value] }))}
+            />
             <label className="field">
               Max rehab $ (optional)
               <input name="maxRehab" type="number" defaultValue={box?.maxRehab ?? ""} placeholder="No cap" />
             </label>
           </section>
 
-          <section className="card p-4 space-y-3">
-            <p className="font-semibold">4. Alerts</p>
+          <section className="card buybox-section">
+            <div className="buybox-section-head">
+              <p className="font-semibold">4. Alerts</p>
+              <SectionSave />
+            </div>
             <select name="alertMode" defaultValue={box?.alertMode ?? "A_AND_B"}>
               <option value="A_AND_B">A + B (default)</option>
               <option value="A_ONLY">A only</option>
@@ -114,9 +123,11 @@ export default async function BuyBoxPage() {
             <p className="text-xs text-muted">Pushes stay A/B. C and D never page you.</p>
           </section>
 
-          <button className="btn-primary" type="submit">
-            Save buy box
-          </button>
+          <div className="buybox-sticky">
+            <button className="btn-primary" type="submit">
+              Save buy box
+            </button>
+          </div>
         </form>
       </main>
       <BuyerNav />
