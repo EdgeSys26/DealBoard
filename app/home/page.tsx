@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { displayGradeLabel, getBuyerBoard, letterTone } from "@/lib/queries";
-import { saveBuyBoxAction, toggleLookingAction } from "@/lib/actions";
+import { displayGradeLabel, getBuyerBoard, letterTone, parseFeedView } from "@/lib/queries";
+import { toggleLookingAction } from "@/lib/actions";
 import {
   acceptCounterAction,
   declineCounterAction,
@@ -14,13 +14,7 @@ import { SaveStar } from "@/components/SaveStar";
 import { listingPhotos } from "@/lib/listing-photos";
 import { compactUsd, usd } from "@/lib/money";
 import { offerCardStatus, offerCardTone } from "@/lib/offer-status";
-import {
-  BADGE_LABEL,
-  NOBLESVILLE_SQUARE,
-  WORK_LEVEL_LABEL,
-  type Letter,
-  type WorkLevel,
-} from "@/lib/types";
+import { BADGE_LABEL, WORK_LEVEL_LABEL, type Letter, type WorkLevel } from "@/lib/types";
 import { daysBetween } from "@/lib/geo";
 import { formatSlot } from "@/lib/dates";
 
@@ -40,7 +34,7 @@ function closeDay(date: Date) {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; pane?: string }>;
+  searchParams: Promise<{ tab?: string; pane?: string; view?: string }>;
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/");
@@ -49,7 +43,11 @@ export default async function HomePage({
 
   const params = await searchParams;
   const tab = buyerTab(params.tab);
-  const { box, cards, looking, holds, offers, saved, savedSellers, hidden } = await getBuyerBoard(user);
+  const feedView = parseFeedView(params.view);
+  const { cards, looking, holds, offers, saved, savedSellers, hidden } = await getBuyerBoard(
+    user,
+    feedView,
+  );
   const savedPane = params.pane === "sellers" ? "sellers" : "listings";
   const titleRows = offers.filter((o) => o.status === "ACCEPTED");
 
@@ -61,101 +59,34 @@ export default async function HomePage({
             <div className="card matches-head-card">
               <div className="matches-head">
                 <div className="active-row">
-                  <span className="text-sm font-semibold tracking-tight">Active</span>
+                  <span className={`text-sm font-semibold tracking-tight${looking ? "" : " text-muted"}`}>
+                    {looking ? "Active" : "Inactive"}
+                  </span>
                   <form action={toggleLookingAction}>
+                    {feedView === "all" ? <input type="hidden" name="view" value="all" /> : null}
                     <button
                       className="active-switch"
                       data-on={looking ? "true" : "false"}
                       type="submit"
                       aria-pressed={looking}
-                      aria-label={looking ? "Active, alerts on" : "Paused, no alerts"}
+                      aria-label={looking ? "Active, alerts on" : "Inactive, no alerts"}
                     >
                       <span className="active-knob" />
                     </button>
                   </form>
                 </div>
-                <details className="filters-menu">
-                  <summary className="chip">Filters</summary>
-                  <form action={saveBuyBoxAction} className="filters-form">
-                    {box?.maxRehab != null ? (
-                      <input type="hidden" name="maxRehab" value={box.maxRehab} />
-                    ) : null}
-                    <label className="field">
-                      Pin or zip
-                      <input
-                        name="centerLabel"
-                        defaultValue={box?.centerLabel ?? NOBLESVILLE_SQUARE.label}
-                      />
-                    </label>
-                    <label className="field">
-                      Zip
-                      <input name="zip" defaultValue={box?.zip ?? NOBLESVILLE_SQUARE.zip} />
-                    </label>
-                    <label className="field">
-                      Radius (mi)
-                      <input
-                        name="radiusMiles"
-                        type="number"
-                        step="0.5"
-                        defaultValue={box?.radiusMiles ?? 8}
-                      />
-                    </label>
-                    <label className="field">
-                      Max price
-                      <input
-                        name="maxAssignmentPrice"
-                        type="number"
-                        defaultValue={box?.maxAssignmentPrice ?? 250000}
-                      />
-                    </label>
-                    <label className="field">
-                      Min beds
-                      <input name="minBeds" type="number" defaultValue={box?.minBeds ?? ""} />
-                    </label>
-                    <label className="field">
-                      Min sqft
-                      <input name="minSf" type="number" defaultValue={box?.minSf ?? ""} />
-                    </label>
-                    <fieldset className="filters-work">
-                      <legend>Work level</legend>
-                      {(
-                        [
-                          ["TURNKEY", "Turnkey"],
-                          ["PAINT_CARPET", "Paint & carpet"],
-                          ["MEDIUM", "Medium"],
-                          ["FULL_GUT", "Full gut"],
-                        ] as const
-                      ).map(([value, label]) => (
-                        <label key={value}>
-                          <input
-                            type="checkbox"
-                            name="workLevels"
-                            value={value}
-                            defaultChecked={(
-                              box
-                                ? (JSON.parse(box.workLevels) as string[])
-                                : ["MEDIUM", "FULL_GUT"]
-                            ).includes(value)}
-                          />
-                          {label}
-                        </label>
-                      ))}
-                    </fieldset>
-                    <label className="field">
-                      Alerts
-                      <select
-                        name="alertMode"
-                        defaultValue={box?.alertMode === "A_ONLY" ? "A_ONLY" : "A_AND_B"}
-                      >
-                        <option value="A_AND_B">A / B</option>
-                        <option value="A_ONLY">A only</option>
-                      </select>
-                    </label>
-                    <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">
-                      Save
-                    </button>
-                  </form>
-                </details>
+                <div className="feed-view">
+                  <Link href="/home" className="chip" data-on={feedView === "ab" ? "true" : "false"}>
+                    A/B
+                  </Link>
+                  <Link
+                    href="/home?view=all"
+                    className="chip"
+                    data-on={feedView === "all" ? "true" : "false"}
+                  >
+                    All in area
+                  </Link>
+                </div>
               </div>
             </div>
 
@@ -227,8 +158,21 @@ export default async function HomePage({
 
             {cards.length === 0 ? (
               <div className="card p-4">
-                <p className="font-semibold">No A or B deals right now</p>
-                <p className="text-sm text-muted mt-1">C and below stay buried. Widen the box or wait for a blast.</p>
+                {feedView === "all" ? (
+                  <>
+                    <p className="font-semibold">Nothing active in this radius</p>
+                    <p className="text-sm text-muted mt-1">
+                      Widen the circle on Buy box, or wait for a listing to go live.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold">No A or B deals right now</p>
+                    <p className="text-sm text-muted mt-1">
+                      C and below stay off this view. Switch to All in area to browse them.
+                    </p>
+                  </>
+                )}
               </div>
             ) : null}
           </>

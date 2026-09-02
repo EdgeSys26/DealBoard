@@ -71,7 +71,9 @@ export async function saveBuyBoxAction(formData: FormData) {
   const minSfRaw = String(formData.get("minSf") || "");
   const maxRehabRaw = String(formData.get("maxRehab") || "");
   const workLevels = formData.getAll("workLevels").map(String) as WorkLevel[];
-  const alertMode = String(formData.get("alertMode") || "A_AND_B") as AlertMode;
+  const rawAlert = String(formData.get("alertMode") || "A_AND_B");
+  const alertMode: AlertMode =
+    rawAlert === "A_ONLY" || rawAlert === "APP_ONLY" ? rawAlert : "A_AND_B";
   const zip = String(formData.get("zip") || NOBLESVILLE_SQUARE.zip);
   const centerLabel = String(formData.get("centerLabel") || NOBLESVILLE_SQUARE.label);
 
@@ -100,10 +102,10 @@ export async function saveBuyBoxAction(formData: FormData) {
   await refreshGradesForBox(box.id);
   revalidatePath("/home");
   revalidatePath("/buy-box");
-  redirect("/home");
+  redirect("/buy-box");
 }
 
-export async function toggleLookingAction() {
+export async function toggleLookingAction(formData?: FormData) {
   const user = await requireUser();
   const next = user.lookingStatus === "LOOKING" ? "PAUSED" : "LOOKING";
   await prisma.user.update({
@@ -112,6 +114,9 @@ export async function toggleLookingAction() {
   });
   revalidatePath("/home");
   revalidatePath("/settings");
+  if (formData && String(formData.get("view") || "") === "all") {
+    redirect("/home?view=all");
+  }
 }
 
 export async function toggleQuietHoursAction() {

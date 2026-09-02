@@ -63,7 +63,7 @@ body {
     box-shadow: none;
   }
 
-  .bottom-nav {
+  .bottom-nav:not(.buyer-bottom-nav) {
     display: none;
   }
 
@@ -431,17 +431,11 @@ body {
   transform: translateX(18px);
 }
 
-.filters-menu {
-  position: relative;
-}
-
-.filters-menu > summary {
-  list-style: none;
-  cursor: pointer;
-}
-
-.filters-menu > summary::-webkit-details-marker {
-  display: none;
+.feed-view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
 }
 
 .filters-form {

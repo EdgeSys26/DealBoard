@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import { applyLifecycle } from "./lifecycle";
 import { gradeAndCache } from "./grade-listing";
-import { isHomeVisible, leftover } from "./grade";
+import { isHomeVisible, isInArea, leftover } from "./grade";
 import { minOfferPrice } from "./offer-floor";
 import { listingTitleDeposit } from "./deposit";
 import { listingPhotos } from "./listing-photos";
@@ -15,7 +15,13 @@ export async function getBuyBox(userId: string) {
   return prisma.buyBox.findFirst({ where: { userId } });
 }
 
-export async function getHomeFeed(user: SessionUser) {
+export type FeedView = "ab" | "all";
+
+export function parseFeedView(raw: string | undefined): FeedView {
+  return raw === "all" ? "all" : "ab";
+}
+
+export async function getHomeFeed(user: SessionUser, view: FeedView = "ab") {
   await applyLifecycle();
   const box = await getBuyBox(user.id);
   const listings = await prisma.listing.findMany({
@@ -42,11 +48,12 @@ export async function getHomeFeed(user: SessionUser) {
     if (listing.status !== "ACTIVE") continue;
     if (mutedIds.has(listing.sellerId)) continue;
     if (hiddenIds.has(listing.id)) continue;
+    if (view === "all" && box && !isInArea(listing, box)) continue;
     let grade: GradeResult | null = null;
     if (box) {
       grade = await gradeAndCache(listing.id, box.id);
     }
-    if (grade && !isHomeVisible(grade.letter)) continue;
+    if (view !== "all" && grade && !isHomeVisible(grade.letter)) continue;
     cards.push({
       listing,
       grade,
@@ -64,8 +71,8 @@ export async function getHomeFeed(user: SessionUser) {
   return { box, cards, looking: user.lookingStatus === "LOOKING" };
 }
 
-export async function getBuyerBoard(user: SessionUser) {
-  const feed = await getHomeFeed(user);
+export async function getBuyerBoard(user: SessionUser, view: FeedView = "ab") {
+  const feed = await getHomeFeed(user, view);
   const holds = await prisma.hold.findMany({
     where: { buyerId: user.id, released: false, expiresAt: { gt: new Date() } },
     include: { listing: true },
