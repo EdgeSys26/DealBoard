@@ -401,34 +401,37 @@ export async function saveListingRowAction(listingId: string, formData: FormData
     Number(formData.get("titleDeposit")),
     await getPlatformTitleDeposit(),
   );
+  const nextAsking = Math.round(Number(formData.get("assignmentPrice")));
+  const askingChanged = Number.isFinite(nextAsking) && nextAsking > 0 && nextAsking !== listing.assignmentPrice;
   await prisma.listing.update({
     where: { id: listingId },
-    data: { offerFloorPct: nextFloor, titleDeposit: nextDeposit },
+    data: {
+      offerFloorPct: nextFloor,
+      titleDeposit: nextDeposit,
+      ...(askingChanged ? { assignmentPrice: nextAsking } : {}),
+    },
   });
-  revalidatePath("/seller");
-  revalidatePath(`/listings/${listingId}`);
-  revalidatePath(`/seller/listings/${listingId}`);
-}
-
-export async function saveListingAskingAction(listingId: string, formData: FormData) {
-  const user = await requireUser();
-  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
-  if (!listing || (listing.sellerId !== user.id && user.role !== "ADMIN")) return;
-  const next = Math.round(Number(formData.get("assignmentPrice")));
-  if (!Number.isFinite(next) || next <= 0) return;
-  if (next !== listing.assignmentPrice) {
-    await prisma.listing.update({
-      where: { id: listingId },
-      data: { assignmentPrice: next },
-    });
+  if (askingChanged) {
     const { notifyAskingPriceChange } = await import("./price-notify");
-    await notifyAskingPriceChange(listingId, next, listing.sellerId);
+    await notifyAskingPriceChange(listingId, nextAsking, listing.sellerId);
   }
   revalidatePath("/seller");
   revalidatePath("/home");
   revalidatePath("/messages");
   revalidatePath(`/listings/${listingId}`);
-  revalidatePath(`/seller/listings/${listingId}`);
+}
+
+export async function batchListingAction(formData: FormData) {
+  const user = await requireUser();
+  if (user.role !== "SELLER" && user.role !== "ADMIN") return;
+  const batch = String(formData.get("batch") || "");
+  const ids = formData.getAll("listingId").map(String).filter(Boolean);
+  const status =
+    batch === "hold" ? "ON_HOLD" : batch === "active" ? "ACTIVE" : batch === "remove" ? "EXPIRED" : "";
+  if (!status || ids.length === 0) return;
+  for (const id of ids) {
+    await setListingStatusAction(id, status);
+  }
 }
 
 export async function favoriteAction(listingId: string, kind: "FAVORITE" | "DONT_SHOW") {
