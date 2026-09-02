@@ -137,6 +137,17 @@ body {
   margin-right: 4px;
 }
 
+.city-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 2px 2px;
+}
+
+.city-chips .chip {
+  gap: 6px;
+}
+
 .listing-status {
   display: flex;
   flex-direction: column;
