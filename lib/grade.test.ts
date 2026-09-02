@@ -3,7 +3,8 @@ import { gradeListing, isAlertLetter, isInArea, leftover } from "./grade";
 import { NOBLESVILLE_SQUARE } from "./types";
 import { minOfferPrice, assertOfferFloor, tightenFloorPct } from "./offer-floor";
 import { daysBetween, haversineMiles } from "./geo";
-import { listingDaysCopy, listingDaysLeft } from "./seller-board";
+import { listingDaysCopy, listingDaysLeft, listingMatchesStatusFilter, parseSellerStatusFilter } from "./seller-board";
+import { citiesIntersectingCircle, cityAllowed, mergeExcludedCities } from "./area-cities";
 import { priceChangeBody } from "./money";
 
 const demoBox = {
@@ -123,6 +124,34 @@ describe("calendar days", () => {
 describe("price change copy", () => {
   it("notifies Price changed · $X", () => {
     expect(priceChangeBody(189_000)).toBe("Price changed · $189,000");
+  });
+});
+
+describe("seller status filters", () => {
+  it("defaults to All and maps Pending/Sold", () => {
+    expect(parseSellerStatusFilter(undefined)).toBe("all");
+    expect(listingMatchesStatusFilter("UNDER_CONTRACT", "pending")).toBe(true);
+    expect(listingMatchesStatusFilter("ASSIGNED", "sold")).toBe(true);
+    expect(listingMatchesStatusFilter("DRAFT", "active")).toBe(false);
+  });
+});
+
+describe("city chips", () => {
+  it("lists cities that intersect the pin + radius", () => {
+    const at8 = citiesIntersectingCircle(NOBLESVILLE_SQUARE, 8);
+    expect(at8).toContain("Noblesville");
+    expect(at8).toContain("Carmel");
+    expect(at8).toContain("Westfield");
+    expect(at8).not.toContain("Zionsville");
+    expect(at8).not.toContain("Indianapolis");
+    const at20 = citiesIntersectingCircle(NOBLESVILLE_SQUARE, 20);
+    expect(at20).toContain("Zionsville");
+  });
+
+  it("hides a deselected city and keeps others on by default", () => {
+    expect(cityAllowed("Noblesville", [])).toBe(true);
+    expect(cityAllowed("Noblesville", ["Noblesville"])).toBe(false);
+    expect(mergeExcludedCities([], ["Noblesville", "Carmel"], ["Noblesville"])).toEqual(["Carmel"]);
   });
 });
 

@@ -64,6 +64,7 @@ model BuyBox {
   workLevels         String
   maxRehab           Int?
   alertMode          String   @default("A_AND_B")
+  excludedCities     String   @default("[]")
   updatedAt          DateTime @updatedAt
   grades             GradeCache[]
 }

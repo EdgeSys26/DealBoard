@@ -389,6 +389,7 @@ export async function repairTrustDemo(prisma: PrismaClient) {
       OR: [
         { address: { contains: "Patriots Landing" }, id: { not: "listing_patriots" } },
         { address: { contains: "Persistence" }, id: { not: "listing_persistence" } },
+        { address: { contains: "Mulberry St" }, id: { not: "listing_zionsville" } },
       ],
     },
     select: { id: true },
