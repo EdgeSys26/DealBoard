@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { citiesIntersectingCircle } from "@/lib/area-cities";
 import { digitsZip, listZipPins, resolveBuyBoxPin } from "@/lib/geo-pins";
 
@@ -21,6 +21,7 @@ export function WhereSection({
   lng: number;
   excludedCities: string[];
 }) {
+  const excludedRef = useRef<HTMLInputElement>(null);
   const [label, setLabel] = useState(centerLabel);
   const [zipValue, setZipValue] = useState(zip);
   const [radius, setRadius] = useState(String(radiusMiles));
@@ -40,6 +41,14 @@ export function WhereSection({
   const zipDigits = digitsZip(zipValue);
   const unknownZip = zipDigits.length === 5 && !pin.matched;
 
+  function writeExcluded(next: string[]) {
+    if (excludedRef.current) {
+      excludedRef.current.value = JSON.stringify(next);
+      excludedRef.current.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    setExcluded(next);
+  }
+
   function applyZip(nextZip: string) {
     setZipValue(nextZip);
     const next = resolveBuyBoxPin({
@@ -49,8 +58,8 @@ export function WhereSection({
     });
     if (next.matched) {
       setLabel(next.label);
-      setExcluded((current) =>
-        current.filter((city) =>
+      writeExcluded(
+        excluded.filter((city) =>
           citiesIntersectingCircle(next, Number.isFinite(radiusValue) ? radiusValue : 0).includes(city),
         ),
       );
@@ -66,8 +75,8 @@ export function WhereSection({
     });
     if (next.matched) {
       setZipValue(next.zip || zipValue);
-      setExcluded((current) =>
-        current.filter((city) =>
+      writeExcluded(
+        excluded.filter((city) =>
           citiesIntersectingCircle(next, Number.isFinite(radiusValue) ? radiusValue : 0).includes(city),
         ),
       );
@@ -75,10 +84,7 @@ export function WhereSection({
   }
 
   function toggleCity(city: string, on: boolean) {
-    setExcluded((current) => {
-      if (on) return current.filter((item) => item !== city);
-      return current.includes(city) ? current : [...current, city];
-    });
+    writeExcluded(on ? excluded.filter((item) => item !== city) : excluded.includes(city) ? excluded : [...excluded, city]);
   }
 
   return (
@@ -86,6 +92,12 @@ export function WhereSection({
       <div className="buybox-section-head">
         <p className="font-semibold">1. Where</p>
       </div>
+      <input
+        ref={excludedRef}
+        type="hidden"
+        name="excludedCities"
+        defaultValue={JSON.stringify(excludedCities)}
+      />
       <label className="field">
         Pin or zip
         <input
@@ -127,7 +139,13 @@ export function WhereSection({
           type="number"
           step="0.5"
           value={radius}
-          onChange={(event) => setRadius(event.target.value)}
+          onChange={(event) => {
+            const value = event.target.value;
+            setRadius(value);
+            const nextRadius = Number(value);
+            const nextCities = citiesIntersectingCircle(pin, Number.isFinite(nextRadius) ? nextRadius : 0);
+            writeExcluded(excluded.filter((city) => nextCities.includes(city)));
+          }}
         />
       </label>
       <p className="text-sm font-medium">Cities in this circle</p>
@@ -136,17 +154,16 @@ export function WhereSection({
           {chipCities.map((city) => {
             const on = !excluded.includes(city);
             return (
-              <label key={city} className="chip" data-on={on ? "true" : "false"}>
-                <input
-                  type="checkbox"
-                  name="cities"
-                  value={city}
-                  checked={on}
-                  onChange={(event) => toggleCity(city, event.target.checked)}
-                  className="w-auto"
-                />
+              <button
+                key={city}
+                type="button"
+                className="chip"
+                data-on={on ? "true" : "false"}
+                aria-pressed={on}
+                onClick={() => toggleCity(city, !on)}
+              >
                 {city}
-              </label>
+              </button>
             );
           })}
         </div>

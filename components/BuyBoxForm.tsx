@@ -61,13 +61,9 @@ export function BuyBoxForm({ children }: { children: React.ReactNode }) {
       ref={formRef}
       className="buybox-form"
       onChange={(event) => schedule(event.currentTarget)}
-      onBlur={(event) => {
-        if (
-          event.target instanceof HTMLInputElement ||
-          event.target instanceof HTMLSelectElement ||
-          event.target instanceof HTMLTextAreaElement
-        ) {
-          flush();
+      onInput={(event) => {
+        if (event.target instanceof HTMLInputElement && event.target.name === "excludedCities") {
+          schedule(event.currentTarget);
         }
       }}
       onSubmit={(event) => event.preventDefault()}

@@ -26,7 +26,7 @@ export async function saveBuyBoxAction(formData: FormData) {
   }
 
   const existing = await prisma.buyBox.findFirst({ where: { userId: user.id } });
-  const { citiesIntersectingCircle, mergeExcludedCities, parseExcludedCities } = await import("./area-cities");
+  const { citiesIntersectingCircle, exclusionsFromBuyBoxForm, parseExcludedCities } = await import("./area-cities");
   const { resolveBuyBoxPin } = await import("./geo-pins");
   const zip = persistBuyBoxZip(typedZip, existing?.zip);
   const pin = resolveBuyBoxPin({
@@ -39,7 +39,12 @@ export async function saveBuyBoxAction(formData: FormData) {
   const chipCities = citiesIntersectingCircle({ lat: pin.lat, lng: pin.lng }, radiusMiles);
   const selectedCities = formData.getAll("cities").map(String);
   const excludedCities = JSON.stringify(
-    mergeExcludedCities(parseExcludedCities(existing?.excludedCities), chipCities, selectedCities),
+    exclusionsFromBuyBoxForm(
+      chipCities,
+      parseExcludedCities(existing?.excludedCities),
+      selectedCities,
+      formData.get("excludedCities"),
+    ),
   );
   const data = {
     userId: user.id,

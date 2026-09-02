@@ -60,3 +60,16 @@ export function mergeExcludedCities(
 ) {
   return chipCities.filter((city) => !selected.includes(city));
 }
+
+export function exclusionsFromBuyBoxForm(
+  chipCities: string[],
+  previous: string[],
+  selected: string[],
+  excludedRaw: FormDataEntryValue | null,
+) {
+  if (typeof excludedRaw === "string") {
+    const explicit = new Set(parseExcludedCities(excludedRaw));
+    return chipCities.filter((city) => explicit.has(city));
+  }
+  return mergeExcludedCities(previous, chipCities, selected);
+}
