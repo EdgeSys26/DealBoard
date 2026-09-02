@@ -525,6 +525,40 @@ body {
   gap: 10px;
 }
 
+.offer-status-pill {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  margin-top: 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.offer-status-pill.sent {
+  background: color-mix(in srgb, var(--accent) 10%, #E4E7EE);
+  color: #3D4A63;
+}
+
+.offer-status-pill.counter {
+  background: color-mix(in srgb, #FF8A00 24%, #fff);
+  color: #B85C00;
+  font-weight: 800;
+}
+
+.offer-status-pill.accepted {
+  background: color-mix(in srgb, var(--grade-a) 22%, #fff);
+  color: #128a42;
+}
+
+.offer-status-pill.closed {
+  background: color-mix(in srgb, var(--grade-d) 16%, #fff);
+  color: var(--grade-d);
+}
+
 .offer-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
