@@ -168,14 +168,41 @@ body {
   color: var(--muted);
 }
 
+.listings-table th:first-child,
+.listings-table td:first-child {
+  width: 2rem;
+}
+
+.listings-table input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 .listings-table input[type="number"] {
   width: 56px;
   padding: 5px 6px;
   font-size: 13px;
 }
 
+.listings-table input[name="assignmentPrice"] {
+  width: 6.2rem;
+  min-width: 5.5rem;
+}
+
 .listings-table input[name="titleDeposit"] {
   width: 72px;
+}
+
+.batch-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--canvas);
 }
 
 .listing-save {
@@ -929,4 +956,20 @@ label.field {
   border-color: var(--accent);
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+
+html.dark {
+  --canvas: #121418;
+  --card: #1b1e24;
+  --ink: #f4f1ea;
+  --muted: #a39d92;
+  --line: #2c3038;
+}
+
+html.dark .role-pill.is-on {
+  color: #fff;
+}
+
+html.dark .listing-save:disabled {
+  background: #4a4f59;
 }
