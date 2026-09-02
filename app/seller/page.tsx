@@ -12,6 +12,11 @@ import { minOfferPrice } from "@/lib/offer-floor";
 import { usd } from "@/lib/money";
 import { formatSlot } from "@/lib/dates";
 import { evaluateHot, hotCooldownUntil, isListingHot, lastHotEndedAt } from "@/lib/hot";
+import {
+  listingMatchesStatusFilter,
+  parseSellerStatusFilter,
+  SELLER_STATUS_FILTERS,
+} from "@/lib/seller-board";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +32,14 @@ function closeDay(date: Date) {
 export default async function SellerHome({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; sort?: string }>;
+  searchParams: Promise<{ tab?: string; sort?: string; status?: string }>;
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/");
   if (user.role === "BUYER") redirect("/home");
   const params = await searchParams;
   const tab = sellerTab(params.tab);
+  const statusFilter = parseSellerStatusFilter(params.status);
   const citySort = params.sort === "city-desc" ? "city-desc" : params.sort === "city" ? "city" : null;
   const sellerId = user.role === "ADMIN" ? "user_seller" : user.id;
   if (tab === "offers") await markSellerOffersSeenAction();
@@ -42,12 +48,23 @@ export default async function SellerHome({
   const hotNow = new Date();
   const liveHotId = listings.find((listing) => isListingHot(listing, hotNow))?.id ?? null;
   const cooldownUntil = hotCooldownUntil(lastHotEndedAt(listings));
+  const filtered = listings.filter((listing) =>
+    listingMatchesStatusFilter(listing.status, statusFilter),
+  );
   const tableListings = citySort
-    ? [...listings].sort((a, b) => {
+    ? [...filtered].sort((a, b) => {
         const cmp = a.city.localeCompare(b.city) || a.address.localeCompare(b.address);
         return citySort === "city-desc" ? -cmp : cmp;
       })
-    : listings;
+    : filtered;
+
+  function listingsHref(nextStatus: string) {
+    const q = new URLSearchParams();
+    q.set("tab", "listings");
+    if (nextStatus !== "all") q.set("status", nextStatus);
+    if (citySort) q.set("sort", citySort);
+    return `/seller?${q.toString()}`;
+  }
   const incoming = listings.flatMap((listing) =>
     listing.offers.map((offer) => ({ listing, offer })),
   );
@@ -81,7 +98,18 @@ export default async function SellerHome({
         {tab === "listings" ? (
           <>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold tracking-tight">Listings</p>
+              <div className="flex flex-wrap items-center gap-1">
+                {SELLER_STATUS_FILTERS.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={listingsHref(item.id)}
+                    className="chip"
+                    data-on={statusFilter === item.id ? "true" : "false"}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Link href="/seller/new" className="btn-secondary w-auto px-3 py-1.5 text-sm">
                   New listing
@@ -122,6 +150,10 @@ export default async function SellerHome({
               <div className="card p-4">
                 <p className="font-semibold">No listings yet</p>
                 <p className="text-sm text-muted mt-1">Publish one to show it on the board.</p>
+              </div>
+            ) : tableListings.length === 0 ? (
+              <div className="card p-4">
+                <p className="font-semibold">No listings in this filter</p>
               </div>
             ) : (
               <div className="card overflow-x-auto">
