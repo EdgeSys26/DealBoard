@@ -46,15 +46,6 @@ export default async function NewListingPage() {
           </label>
           <label className="field">Access<input name="access" defaultValue="Lockbox" /></label>
           <label className="field">Contract expiration<input name="contractExpiresAt" type="date" required /></label>
-          <label className="field">Work
-            <select name="workLevel" defaultValue="MEDIUM">
-              {WORK_LEVELS.map((value) => (
-                <option key={value} value={value}>
-                  {WORK_LEVEL_LABEL[value]}
-                </option>
-              ))}
-            </select>
-          </label>
           <label className="field">
             <span className="floor-copy">Offer floor: {levers.defaultOfferFloorPct}% under</span>
             <input
@@ -82,13 +73,24 @@ export default async function NewListingPage() {
             Buyer cannot offer more than this percent below asking. Default {levers.defaultOfferFloorPct}%. You may tighten later.
           </p>
           <label className="field">Our rehab guess<input name="rehabEstimate" type="number" defaultValue={15000} /></label>
-          <label className="field">Known issues<textarea name="knownIssues" rows={3} /></label>
+          <p className="text-sm font-semibold">Work</p>
+          <p className="text-xs text-muted">Same 8 as buyer I&apos;ll take. One pick.</p>
+          <CheckRows
+            name="workLevel"
+            type="radio"
+            checked={["MEDIUM"]}
+            options={WORK_LEVELS.map((value) => ({ value, label: WORK_LEVEL_LABEL[value] }))}
+          />
           <p className="text-sm font-semibold">Needs work</p>
+          <p className="text-xs text-muted">
+            Same 12 the buyer sees as chips. Not I&apos;ll take, and not a buy-box filter.
+          </p>
           <CheckRows
             name="needsWork"
             checked={[]}
             options={NEEDS_WORK.map((value) => ({ value, label: value }))}
           />
+          <label className="field">Known issues<textarea name="knownIssues" rows={3} /></label>
           <label className="flex gap-2 text-sm font-medium">
             <input name="hasWalkthrough" type="checkbox" defaultChecked className="w-auto" />
             30s walkthrough uploaded

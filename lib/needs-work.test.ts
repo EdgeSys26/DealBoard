@@ -50,6 +50,10 @@ describe("needs work punch list", () => {
     expect(parseNeedsWork(["Roof", "Foundation", "Aliens"])).toEqual(["Roof", "Foundation"]);
     expect(needsWorkJson(["Roof"])).toBe('["Roof"]');
   });
+
+  it("does not reuse I'll take labels for Needs work", () => {
+    expect(NEEDS_WORK).not.toEqual(Object.values(WORK_LEVEL_LABEL));
+  });
 });
 
 describe("listing photos", () => {

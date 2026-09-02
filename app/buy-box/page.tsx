@@ -54,6 +54,10 @@ export default async function BuyBoxPage() {
             <div className="buybox-section-head">
               <p className="font-semibold">3. I&apos;ll take</p>
             </div>
+            <p className="text-xs text-muted">
+              Work. Same 8 the seller picks once. Roof, HVAC, and the rest are Needs work on
+              the listing — not a filter here.
+            </p>
             <CheckRows
               name="workLevels"
               checked={levels}
