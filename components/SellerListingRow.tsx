@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ClickRow } from "@/components/ClickRow";
 import { saveListingRowAction, setListingStatusAction, startHotAction } from "@/lib/actions";
 import { listingPhotos } from "@/lib/listing-photos";
+import { ListingPhoto } from "@/components/ListingPhoto";
 import { listingDaysCopy, listingExpiresSoon } from "@/lib/seller-board";
 import { compactUsd, usd } from "@/lib/money";
 import { STATUS_LABEL } from "@/lib/types";
@@ -83,8 +84,7 @@ export function SellerListingRow({
       </td>
       <td>
         <Link href={viewHref}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photos[0]} alt="" className="listing-thumb" />
+          <ListingPhoto src={photos[0]} className="listing-thumb" />
         </Link>
       </td>
       <td>
