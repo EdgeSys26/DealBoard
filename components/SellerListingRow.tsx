@@ -5,13 +5,14 @@ import { useState } from "react";
 import { ClickRow } from "@/components/ClickRow";
 import { saveListingRowAction, setListingStatusAction, startHotAction } from "@/lib/actions";
 import { listingPhotos } from "@/lib/listing-photos";
-import { listingDaysLeft, listingExpiresSoon } from "@/lib/seller-board";
+import { listingDaysCopy, listingExpiresSoon } from "@/lib/seller-board";
 import { compactUsd, usd } from "@/lib/money";
 import { STATUS_LABEL } from "@/lib/types";
 
 type RowListing = {
   id: string;
   address: string;
+  city: string;
   photosJson: string;
   assignmentPrice: number;
   originalContractPrice: number;
@@ -24,6 +25,7 @@ type RowListing = {
   hotUntil?: Date | string | null;
   holds: { id: string }[];
   offers: { status: string; counterPrice: number | null; price: number }[];
+  favorites: { id: string }[];
 };
 
 function spreadLabel(n: number) {
@@ -48,30 +50,38 @@ export function SellerListingRow({
   const [dirty, setDirty] = useState(false);
   const photos = listingPhotos(listing);
   const deposit = Math.max(listing.titleDeposit ?? platformDeposit, platformDeposit);
-  const days = listingDaysLeft(new Date(listing.contractExpiresAt));
+  const expiresAt = new Date(listing.contractExpiresAt);
+  const daysCopy = listingDaysCopy(expiresAt, listing.status);
   const expiresSoon = listingExpiresSoon({
     status: listing.status,
-    contractExpiresAt: new Date(listing.contractExpiresAt),
+    contractExpiresAt: expiresAt,
   });
   const spread = spreadLabel(listing.assignmentPrice - listing.originalContractPrice);
   const counter = listing.offers.find((offer) => offer.status === "COUNTERED");
   const formId = `listing-save-${listing.id}`;
+  const editHref = `/seller/listings/${listing.id}`;
+
+  async function saveRow(formData: FormData) {
+    await saveListingRowAction(listing.id, formData);
+    setDirty(false);
+  }
 
   return (
-    <ClickRow href={`/listings/${listing.id}`}>
+    <ClickRow href={editHref}>
       <td>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photos[0]} alt="" className="listing-thumb" />
+        <Link href={editHref}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photos[0]} alt="" className="listing-thumb" />
+        </Link>
       </td>
       <td>
-        <Link href={`/listings/${listing.id}`} className="font-semibold">
+        <Link href={editHref} className="font-semibold">
           {isHot ? <span className="hot-flame" aria-label="Hot">🔥</span> : null}
           {listing.address}
         </Link>
-        <p className={`listing-days${expiresSoon ? " soon" : ""}`}>
-          {days === 1 ? "1 day left" : `${days} days left`}
-        </p>
+        <p className={`listing-days${expiresSoon ? " soon" : ""}`}>{daysCopy}</p>
       </td>
+      <td className="whitespace-nowrap">{listing.city}</td>
       <td className="whitespace-nowrap">{usd(listing.originalContractPrice)}</td>
       <td className="whitespace-nowrap">
         {usd(listing.assignmentPrice)}
@@ -107,11 +117,7 @@ export function SellerListingRow({
               </>
             )}
           </div>
-          {!listing.verified ? (
-            <p className="listing-days">Publish blocked until contract verified</p>
-          ) : listing.status === "DRAFT" ? (
-            <p className="listing-days">Verified — set Active to publish</p>
-          ) : null}
+          {!listing.verified ? <p className="listing-days">Needs contract verified</p> : null}
           {counter ? (
             <p className="offer-status-pill counter listing-counter-chip">
               Counter sent · {usd(counter.counterPrice ?? counter.price)}
@@ -167,13 +173,10 @@ export function SellerListingRow({
         />
       </td>
       <td className="whitespace-nowrap text-sm text-muted">
-        {listing.views}/{listing.holds.length}/{listing.offers.length}
-      </td>
-      <td className="whitespace-nowrap text-sm">
-        {listing.verified ? "Contract verified" : "No contract"}
+        {listing.views} / {listing.favorites.length}
       </td>
       <td>
-        <form id={formId} action={saveListingRowAction.bind(null, listing.id)}>
+        <form id={formId} action={saveRow}>
           <button className="listing-save" type="submit" disabled={!dirty}>
             Save
           </button>
