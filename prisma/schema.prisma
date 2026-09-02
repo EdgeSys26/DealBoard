@@ -103,6 +103,8 @@ model Listing {
   titleDeposit          Int      @default(2500)
   liveStartedAt         DateTime
   onHoldUntil           DateTime?
+  hotUntil              DateTime?
+  hotHours              Int?
   views                 Int      @default(0)
   createdAt             DateTime @default(now())
 
@@ -211,7 +213,7 @@ model Favorite {
   userId    String
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   listingId String
-  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   kind      String
 
   @@unique([userId, listingId])

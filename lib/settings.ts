@@ -74,6 +74,12 @@ export async function ensureBoardSettings() {
     ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "badgeOverride" BOOLEAN NOT NULL DEFAULT false
   `);
   await prisma.$executeRawUnsafe(`
+    ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "hotUntil" TIMESTAMP
+  `);
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "hotHours" INTEGER
+  `);
+  await prisma.$executeRawUnsafe(`
     INSERT INTO "PlatformSetting" (
       "id", "titleDeposit", "includedActiveSlots", "extraListingDollars",
       "defaultOfferFloorPct", "onHoldMaxDays"
