@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { displayGradeLabel, getListingDetail, letterTone } from "@/lib/queries";
-import { holdListingAction, pickTitleSlotAction } from "@/lib/actions";
+import { holdListingAction, pickTitleSlotAction, updateListingOccupancyAction } from "@/lib/actions";
+import { occupancyChip, parseOccupancy, TRESPASS_NOTICE } from "@/lib/occupancy";
 import {
   acceptCounterAction,
   declineCounterAction,
@@ -91,10 +92,14 @@ export default async function ListingPage({
             <div className="flex flex-wrap gap-2 mt-3">
               {listing.verified ? <span className="chip">Verified contract</span> : <span className="chip">Unverified</span>}
               {isListingHot(listing) ? <span className="chip">🔥 Hot</span> : null}
+              {user.role === "BUYER" ? (
+                <span className="chip occupancy-chip">{occupancyChip(listing.occupancy)}</span>
+              ) : null}
               <span className="chip">{BADGE_LABEL[listing.seller.badge as "GREEN" | "SILVER" | "GOLD"]}</span>
               <span className="chip">{listingDaysCopy(listing.contractExpiresAt, listing.status)}</span>
               {listing.hasWalkthrough ? <span className="chip">30s walkthrough</span> : <span className="chip">Limited distribution</span>}
             </div>
+            {user.role === "BUYER" ? <p className="listing-trespass mt-3">{TRESPASS_NOTICE}</p> : null}
           </div>
         </div>
 
@@ -128,7 +133,24 @@ export default async function ListingPage({
             <Row label="Seller repairs" value={usd(listing.sellerRepairs)} />
             <Row label="Our rehab guess" value={usd(listing.rehabEstimate)} />
             <Row label="Original contract" value={usd(listing.originalContractPrice)} />
-            <Row label="Occupancy" value={listing.occupancy} />
+            {user.role === "SELLER" || user.role === "ADMIN" ? (
+              <form action={updateListingOccupancyAction} className="listing-fact occupancy-edit">
+                <span>Occupancy</span>
+                <span className="occupancy-edit-controls">
+                  <input type="hidden" name="listingId" value={listing.id} />
+                  <select name="occupancy" defaultValue={parseOccupancy(listing.occupancy)}>
+                    <option value="Owner occupied">Owner occupied</option>
+                    <option value="Tenant">Tenant</option>
+                    <option value="Vacant">Vacant</option>
+                  </select>
+                  <button className="listing-save" type="submit">
+                    Save
+                  </button>
+                </span>
+              </form>
+            ) : (
+              <Row label="Occupancy" value={parseOccupancy(listing.occupancy)} />
+            )}
             <Row label="Access" value={listing.access} />
             <Row
               label="Wholesaler"
