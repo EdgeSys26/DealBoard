@@ -1004,3 +1004,94 @@ html.dark .listing-save:disabled {
   padding: 5px 6px;
   font-size: 12px;
 }
+
+.check-rows {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.check-row input,
+.check-row input[type="checkbox"] {
+  width: 1rem;
+  min-width: 1rem;
+  height: 1rem;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.needs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.buybox-page {
+  padding-bottom: 0.5rem;
+}
+
+.buybox-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buybox-section {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.buybox-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.buybox-section .field {
+  gap: 4px;
+}
+
+.buybox-section input,
+.buybox-section select,
+.buybox-section textarea {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.buybox-save {
+  width: auto;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.buybox-sticky {
+  position: sticky;
+  bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  z-index: 25;
+  padding: 8px 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 -6px 18px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+html.dark .buybox-sticky {
+  box-shadow: 0 -6px 18px color-mix(in srgb, #000 40%, transparent);
+}
