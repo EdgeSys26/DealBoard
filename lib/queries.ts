@@ -45,7 +45,7 @@ export async function getHomeFeed(user: SessionUser, view: FeedView = "ab") {
 
   const cards = [];
   for (const listing of listings) {
-    if (listing.status !== "ACTIVE") continue;
+    if (listing.status !== "ACTIVE" || !listing.verified) continue;
     if (mutedIds.has(listing.sellerId)) continue;
     if (hiddenIds.has(listing.id)) continue;
     if (view === "all" && box && !isInArea(listing, box)) continue;
@@ -133,7 +133,7 @@ export async function getListingDetail(id: string, user: SessionUser) {
   );
   const hiddenFromBuyer =
     user.role === "BUYER" &&
-    listing.status !== "ACTIVE" &&
+    (listing.status !== "ACTIVE" || !listing.verified) &&
     !acceptedMine;
   if (hiddenFromBuyer) {
     return { hidden: true as const, listing: null };
@@ -334,7 +334,13 @@ export async function getAdminData() {
     fallThroughs: fallthroughs.length,
     muteAlerts: muteAlerts.length,
     expiring: listings.filter((l) => listingExpiresSoon(l)).length,
+    review: listings.filter(
+      (l) => !l.verified && l.status !== "EXPIRED" && l.status !== "ASSIGNED",
+    ).length,
   };
+  const reviewListings = listings.filter(
+    (l) => !l.verified && l.status !== "EXPIRED" && l.status !== "ASSIGNED",
+  );
   const soldDeals = listings
     .filter((l) => l.status === "ASSIGNED")
     .map((l) => {
@@ -364,6 +370,7 @@ export async function getAdminData() {
     sellerBilling,
     tiles,
     soldDeals,
+    reviewListings,
   };
 }
 

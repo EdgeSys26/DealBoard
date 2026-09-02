@@ -17,6 +17,7 @@ model User {
   phone          String
   entityName     String?
   badge          String   @default("GREEN")
+  badgeOverride  Boolean  @default(false)
   fundedCloses   Int      @default(0)
   lookingStatus  String   @default("LOOKING")
   blacklisted    Boolean  @default(false)
@@ -97,7 +98,7 @@ model Listing {
   verified              Boolean  @default(false)
   workLevel             String
   rehabEstimate         Int
-  status                String   @default("ACTIVE")
+  status                String   @default("DRAFT")
   offerFloorPct         Float    @default(10)
   titleDeposit          Int      @default(2500)
   liveStartedAt         DateTime

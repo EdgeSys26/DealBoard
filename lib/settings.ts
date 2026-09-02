@@ -71,6 +71,9 @@ export async function ensureBoardSettings() {
     ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "sellerOffersSeenAt" TIMESTAMP
   `);
   await prisma.$executeRawUnsafe(`
+    ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "badgeOverride" BOOLEAN NOT NULL DEFAULT false
+  `);
+  await prisma.$executeRawUnsafe(`
     INSERT INTO "PlatformSetting" (
       "id", "titleDeposit", "includedActiveSlots", "extraListingDollars",
       "defaultOfferFloorPct", "onHoldMaxDays"
@@ -88,6 +91,13 @@ export async function ensureBoardSettings() {
       where: { id: listing.id },
       data: { photosJson: JSON.stringify(match[1]) },
     });
+  }
+
+  try {
+    const { repairTrustDemo } = await import("./demo-repair");
+    await repairTrustDemo(prisma);
+  } catch {
+    // Demo rows are optional if users are not seeded yet.
   }
 }
 

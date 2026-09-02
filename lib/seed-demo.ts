@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
 import type { PrismaClient } from "@prisma/client";
 import { gradeListing } from "./grade";
+import { repairTrustDemo } from "./demo-repair";
 import { NOBLESVILLE_SQUARE } from "./types";
 import type { Badge, WorkLevel } from "./types";
-import { photosForSeed } from "./listing-photos";
 
 const DEMO_PASSWORD = "demo";
 
@@ -43,8 +43,8 @@ export async function seedDemo(prisma: PrismaClient) {
       name: "Morgan Hale",
       phone: "317-555-0199",
       entityName: "Midwest Contract Desk LLC",
-      badge: "SILVER",
-      fundedCloses: 4,
+      badge: "GREEN",
+      fundedCloses: 0,
       lookingStatus: "LOOKING",
     },
   });
@@ -95,118 +95,11 @@ export async function seedDemo(prisma: PrismaClient) {
     },
   });
 
-  const pleasant = await prisma.listing.create({
-    data: {
-      id: "listing_pleasant",
-      sellerId: seller.id,
-      address: "1847 Pleasant St",
-      city: "Noblesville",
-      state: "IN",
-      zip: "46060",
-      lat: 40.0442,
-      lng: -86.0189,
-      assignmentPrice: 189_000,
-      originalContractPrice: 171_000,
-      sellerArv: 310_000,
-      sellerRepairs: 18_000,
-      platformAvm: 278_000,
-      avmSource: "mock",
-      beds: 3,
-      baths: 1,
-      sf: 1216,
-      occupancy: "Vacant",
-      access: "Supra lockbox, code in thread after accept",
-      contractExpiresAt: new Date("2026-09-10T17:00:00-04:00"),
-      knownIssues: "Roof is original (2004). Rear deck boards soft. HVAC runs.",
-      photosJson: JSON.stringify(photosForSeed("pleasant")),
-      titleDeposit: 2500,
-      walkthroughUrl: "/walkthrough/pleasant.mp4",
-      hasWalkthrough: true,
-      contractUploaded: true,
-      verified: true,
-      workLevel: "MEDIUM",
-      rehabEstimate: 12_000,
-      status: "ACTIVE",
-      offerFloorPct: 10,
-      liveStartedAt: new Date("2026-08-19T12:00:00-04:00"),
-      views: 47,
-    },
-  });
+  await repairTrustDemo(prisma);
 
-  const cicero = await prisma.listing.create({
-    data: {
-      id: "listing_cicero",
-      sellerId: seller.id,
-      address: "622 Cicero Ave",
-      city: "Noblesville",
-      state: "IN",
-      zip: "46060",
-      lat: 40.0498,
-      lng: -86.0134,
-      assignmentPrice: 241_000,
-      originalContractPrice: 228_000,
-      sellerArv: 325_000,
-      sellerRepairs: 22_000,
-      platformAvm: 300_000,
-      avmSource: "mock",
-      beds: 3,
-      baths: 2,
-      sf: 1408,
-      occupancy: "Tenant month-to-month",
-      access: "Showing window 10a–2p with 2-hour notice",
-      contractExpiresAt: new Date("2026-09-05T17:00:00-04:00"),
-      knownIssues: "Kitchen is original oak. One bath needs surround.",
-      photosJson: JSON.stringify(photosForSeed("cicero")),
-      titleDeposit: 2500,
-      walkthroughUrl: "/walkthrough/cicero.mp4",
-      hasWalkthrough: true,
-      contractUploaded: true,
-      verified: true,
-      workLevel: "MEDIUM",
-      rehabEstimate: 35_000,
-      status: "ACTIVE",
-      offerFloorPct: 10,
-      liveStartedAt: new Date("2026-08-24T12:00:00-04:00"),
-      views: 22,
-    },
-  });
-
-  const harbour = await prisma.listing.create({
-    data: {
-      id: "listing_harbour",
-      sellerId: greenSeller.id,
-      address: "401 Harbour Trees Dr",
-      city: "Noblesville",
-      state: "IN",
-      zip: "46062",
-      lat: 40.0701,
-      lng: -86.0588,
-      assignmentPrice: 319_000,
-      originalContractPrice: 305_000,
-      sellerArv: 340_000,
-      sellerRepairs: 6_000,
-      platformAvm: 328_000,
-      avmSource: "mock",
-      beds: 2,
-      baths: 2,
-      sf: 1104,
-      occupancy: "Owner occupied",
-      access: "Weekend only",
-      contractExpiresAt: new Date("2026-09-12T17:00:00-04:00"),
-      knownIssues: "Cosmetic only. HOA $180/mo.",
-      photosJson: JSON.stringify(photosForSeed("harbour")),
-      titleDeposit: 2500,
-      hasWalkthrough: false,
-      contractUploaded: false,
-      verified: false,
-      workLevel: "PAINT_CARPET",
-      rehabEstimate: 8_000,
-      status: "ACTIVE",
-      offerFloorPct: 10,
-      liveStartedAt: new Date("2026-08-26T12:00:00-04:00"),
-      views: 9,
-    },
-  });
+  const pleasant = await prisma.listing.findUniqueOrThrow({ where: { id: "listing_pleasant" } });
+  const cicero = await prisma.listing.findUniqueOrThrow({ where: { id: "listing_cicero" } });
+  const harbour = await prisma.listing.findUniqueOrThrow({ where: { id: "listing_harbour" } });
 
   const pleasantComps = [
     { address: "1820 Pleasant St", salePrice: 265000, beds: 3, baths: 1.5, sf: 1188, lat: 40.0448, lng: -86.0196, distanceMi: 0.1, soldDate: "2026-05-12" },
@@ -332,9 +225,12 @@ export async function seedDemo(prisma: PrismaClient) {
     maxRehab: box.maxRehab,
   };
 
+  const morganNow = await prisma.user.findUniqueOrThrow({ where: { id: seller.id } });
+  const rileyNow = await prisma.user.findUniqueOrThrow({ where: { id: greenSeller.id } });
+
   for (const listing of [pleasant, cicero, harbour]) {
     const sellerRow =
-      listing.sellerId === seller.id ? seller : greenSeller;
+      listing.sellerId === seller.id ? morganNow : rileyNow;
     const photos = JSON.parse(listing.photosJson) as string[];
     const daysRemaining = Math.max(
       0,
