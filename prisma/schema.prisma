@@ -92,6 +92,7 @@ model Listing {
   access                String
   contractExpiresAt     DateTime
   knownIssues           String
+  needsWorkJson         String   @default("[]")
   photosJson            String
   walkthroughUrl        String?
   hasWalkthrough        Boolean  @default(false)
@@ -257,7 +258,7 @@ model Report {
   type       String
   notes      String
   status     String   @default("OPEN")
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Thread {
