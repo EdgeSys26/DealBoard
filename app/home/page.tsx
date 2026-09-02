@@ -13,7 +13,7 @@ import { BuyerNav } from "@/components/Nav";
 import { SaveStar } from "@/components/SaveStar";
 import { listingPhotos } from "@/lib/listing-photos";
 import { compactUsd, usd } from "@/lib/money";
-import { offerCardStatus } from "@/lib/offer-status";
+import { offerCardStatus, offerCardTone } from "@/lib/offer-status";
 import {
   BADGE_LABEL,
   NOBLESVILLE_SQUARE,
@@ -131,9 +131,10 @@ export default async function HomePage({
                             type="checkbox"
                             name="workLevels"
                             value={value}
-                            defaultChecked={(box
-                              ? (JSON.parse(box.workLevels) as string[])
-                              : ["MEDIUM", "FULL_GUT"]
+                            defaultChecked={(
+                              box
+                                ? (JSON.parse(box.workLevels) as string[])
+                                : ["MEDIUM", "FULL_GUT"]
                             ).includes(value)}
                           />
                           {label}
@@ -204,13 +205,15 @@ export default async function HomePage({
                         <p className="text-xs text-muted mt-1">
                           AVM {listing.platformAvm ? usd(listing.platformAvm) : "none"} · {days} days
                         </p>
-                        {offer ? (
-                          <p className="text-xs font-semibold mt-1">{offerCardStatus(offer)}</p>
-                        ) : null}
                         {listing.id === "listing_pleasant" && !offer ? (
                           <p className="text-xs font-semibold text-accent mt-1">2-hour hold on this card</p>
                         ) : null}
                       </Link>
+                      {offer ? (
+                        <p className={`offer-status-pill ${offerCardTone(offer)}`}>
+                          {offerCardStatus(offer)}
+                        </p>
+                      ) : null}
                     </div>
                     <form action={hideListingAction.bind(null, listing.id)} className="px-3 pb-3 pt-2">
                       <button className="btn-secondary w-auto px-3 py-1.5 text-sm" type="submit">

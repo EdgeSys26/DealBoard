@@ -11,7 +11,18 @@ export function offerCardStatus(offer: {
   }
   if (offer.status === "ACCEPTED") return "Accepted";
   if (offer.status === "DECLINED" || offer.status === "REJECTED") return "Declined";
+  if (offer.status === "EXPIRED") return "Expired";
   return offer.status;
+}
+
+export function offerCardTone(offer: { status: string }) {
+  if (offer.status === "PENDING") return "sent";
+  if (offer.status === "COUNTERED") return "counter";
+  if (offer.status === "ACCEPTED") return "accepted";
+  if (offer.status === "DECLINED" || offer.status === "REJECTED" || offer.status === "EXPIRED") {
+    return "closed";
+  }
+  return "sent";
 }
 
 export function isoDay(date: Date) {
