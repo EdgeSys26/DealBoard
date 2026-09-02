@@ -13,6 +13,7 @@ import {
 import { BuyerNav } from "@/components/Nav";
 import { SaveStar } from "@/components/SaveStar";
 import { listingPhotos } from "@/lib/listing-photos";
+import { ListingPhoto } from "@/components/ListingPhoto";
 import { compactUsd, usd } from "@/lib/money";
 import { offerCardStatus, offerCardTone } from "@/lib/offer-status";
 import { BADGE_LABEL, WORK_LEVEL_LABEL, type Letter, type WorkLevel } from "@/lib/types";
@@ -107,8 +108,7 @@ export default async function HomePage({
                   <article key={listing.id} className="card overflow-hidden">
                     <Link href={`/listings/${listing.id}`} className="block">
                       <div className="relative h-40 bg-canvas">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={photos[0]} alt="" className="h-full w-full object-cover" />
+                        <ListingPhoto src={photos[0]} className="h-full w-full object-cover" />
                         <span className={`grade-pill ${letterTone(letter)}`}>{displayGradeLabel(letter)}</span>
                         {isListingHot(listing) ? (
                           <span className="absolute top-2 left-2 text-[11px] font-bold bg-white/90 px-2 py-1 rounded-full">
