@@ -121,6 +121,42 @@ export async function ensureBoardSettings() {
       await prisma.listing.update({ where: { id: row.id }, data: { occupancy } });
     }
   }
+
+  const { resolveBuyBoxPin } = await import("./geo-pins");
+  const { citiesIntersectingCircle, parseExcludedCities } = await import("./area-cities");
+  const boxes = await prisma.buyBox.findMany();
+  for (const box of boxes) {
+    const pin = resolveBuyBoxPin({
+      zip: box.zip,
+      centerLabel: box.centerLabel,
+      fallback: box,
+    });
+    if (!pin.matched) continue;
+    const chipCities = citiesIntersectingCircle({ lat: pin.lat, lng: pin.lng }, box.radiusMiles);
+    const excludedCities = parseExcludedCities(box.excludedCities).filter((city) =>
+      chipCities.includes(city),
+    );
+    const nextExcluded = JSON.stringify(excludedCities);
+    if (
+      box.lat === pin.lat &&
+      box.lng === pin.lng &&
+      box.centerLabel === pin.label &&
+      box.zip === pin.zip &&
+      box.excludedCities === nextExcluded
+    ) {
+      continue;
+    }
+    await prisma.buyBox.update({
+      where: { id: box.id },
+      data: {
+        lat: pin.lat,
+        lng: pin.lng,
+        centerLabel: pin.label,
+        zip: pin.zip,
+        excludedCities: nextExcluded,
+      },
+    });
+  }
 }
 
 function clampInt(n: number, fallback: number, min = 1) {

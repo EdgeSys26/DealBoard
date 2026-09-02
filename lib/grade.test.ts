@@ -155,6 +155,9 @@ describe("city chips", () => {
     expect(cityAllowed("Noblesville", [])).toBe(true);
     expect(cityAllowed("Noblesville", ["Noblesville"])).toBe(false);
     expect(mergeExcludedCities([], ["Noblesville", "Carmel"], ["Noblesville"])).toEqual(["Carmel"]);
+    expect(mergeExcludedCities(["Fillmore"], ["Noblesville", "Carmel"], ["Noblesville"])).toEqual([
+      "Carmel",
+    ]);
   });
 
   it("omits deselected cities from the home chip row", () => {
