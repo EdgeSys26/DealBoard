@@ -14,6 +14,10 @@ export function usdExact(n: number): string {
   }).format(n);
 }
 
+export function priceChangeBody(price: number) {
+  return `Price changed · ${usd(price)}`;
+}
+
 export function compactUsd(n: number): string {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `$${Math.round(n / 1_000)}k`;

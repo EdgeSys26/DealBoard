@@ -3,7 +3,19 @@ import { daysBetween } from "./geo";
 export const EXPIRY_WARN_DAYS = 3;
 
 export function listingDaysLeft(expiresAt: Date, now = new Date()) {
-  return daysBetween(now, expiresAt);
+  return Math.max(0, daysBetween(now, expiresAt));
+}
+
+export function listingDaysCopy(
+  expiresAt: Date,
+  status: string,
+  now = new Date(),
+) {
+  const raw = daysBetween(now, expiresAt);
+  if (status === "EXPIRED" || raw < 0) return "Expired";
+  if (raw === 0) return "0 days left";
+  if (raw === 1) return "1 day left";
+  return `${raw} days left`;
 }
 
 export function listingExpiresSoon(
