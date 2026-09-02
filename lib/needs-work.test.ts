@@ -5,7 +5,7 @@ import {
   PHOTO_MCCORDSVILLE,
   PHOTO_SHERIDAN,
 } from "./listing-photos";
-import { needsWorkJson, parseNeedsWork } from "./needs-work";
+import { NEEDS_WORK, needsWorkJson, parseNeedsWork } from "./needs-work";
 import { parseWorkLevel, parseWorkLevels, WORK_LEVEL_LABEL, WORK_LEVELS } from "./types";
 
 describe("I'll take work levels", () => {
@@ -32,7 +32,21 @@ describe("I'll take work levels", () => {
 });
 
 describe("needs work punch list", () => {
-  it("keeps Roof and Foundation", () => {
+  it("keeps the twelve seller and buyer options", () => {
+    expect(NEEDS_WORK).toEqual([
+      "Roof",
+      "Foundation",
+      "HVAC",
+      "Electrical",
+      "Plumbing",
+      "Windows",
+      "Kitchen",
+      "Baths",
+      "Flooring",
+      "Sewer / septic",
+      "Mold / moisture",
+      "Other",
+    ]);
     expect(parseNeedsWork(["Roof", "Foundation", "Aliens"])).toEqual(["Roof", "Foundation"]);
     expect(needsWorkJson(["Roof"])).toBe('["Roof"]');
   });

@@ -99,7 +99,7 @@ export function gradeListing(
     gateFails.push("Below minimum square feet");
   }
   if (!isWorkCompatible(listing.workLevel, box.workLevels)) {
-    gateFails.push("Work level not a match");
+    gateFails.push("Work not a match");
   }
   if (box.maxRehab != null && listing.rehabEstimate > box.maxRehab) {
     gateFails.push("Rehab above max");

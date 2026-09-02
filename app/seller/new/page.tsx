@@ -46,7 +46,7 @@ export default async function NewListingPage() {
           </label>
           <label className="field">Access<input name="access" defaultValue="Lockbox" /></label>
           <label className="field">Contract expiration<input name="contractExpiresAt" type="date" required /></label>
-          <label className="field">Work level
+          <label className="field">Work
             <select name="workLevel" defaultValue="MEDIUM">
               {WORK_LEVELS.map((value) => (
                 <option key={value} value={value}>
