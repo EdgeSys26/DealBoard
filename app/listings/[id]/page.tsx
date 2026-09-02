@@ -137,43 +137,22 @@ export default async function ListingPage({
             <Row label="Our rehab guess" value={usd(listing.rehabEstimate)} />
             <Row label="Original contract" value={usd(listing.originalContractPrice)} />
             {user.role === "SELLER" || user.role === "ADMIN" ? (
-              <>
-                <form action={updateListingOccupancyAction} className="listing-fact occupancy-edit">
-                  <span>Occupancy</span>
-                  <span className="occupancy-edit-controls">
-                    <input type="hidden" name="listingId" value={listing.id} />
-                    <select name="occupancy" defaultValue={parseOccupancy(listing.occupancy)}>
-                      <option value="Owner occupied">Owner occupied</option>
-                      <option value="Tenant">Tenant</option>
-                      <option value="Vacant">Vacant</option>
-                    </select>
-                    <button className="listing-save" type="submit">
-                      Save
-                    </button>
-                  </span>
-                </form>
-                <form action={updateListingOccupancyAction} className="listing-fact occupancy-edit">
-                  <span>Work</span>
-                  <span className="occupancy-edit-controls">
-                    <input type="hidden" name="listingId" value={listing.id} />
-                    <select name="workLevel" defaultValue={listing.workLevel}>
-                      {WORK_LEVELS.map((value) => (
-                        <option key={value} value={value}>
-                          {WORK_LEVEL_LABEL[value]}
-                        </option>
-                      ))}
-                    </select>
-                    <button className="listing-save" type="submit">
-                      Save
-                    </button>
-                  </span>
-                </form>
-              </>
+              <form action={updateListingOccupancyAction} className="listing-fact occupancy-edit">
+                <span>Occupancy</span>
+                <span className="occupancy-edit-controls">
+                  <input type="hidden" name="listingId" value={listing.id} />
+                  <select name="occupancy" defaultValue={parseOccupancy(listing.occupancy)}>
+                    <option value="Owner occupied">Owner occupied</option>
+                    <option value="Tenant">Tenant</option>
+                    <option value="Vacant">Vacant</option>
+                  </select>
+                  <button className="listing-save" type="submit">
+                    Save
+                  </button>
+                </span>
+              </form>
             ) : (
-              <>
-                <Row label="Occupancy" value={parseOccupancy(listing.occupancy)} />
-                <Row label="Work" value={workLabel} />
-              </>
+              <Row label="Occupancy" value={parseOccupancy(listing.occupancy)} />
             )}
             <Row label="Access" value={listing.access} />
             <Row
@@ -190,30 +169,36 @@ export default async function ListingPage({
           </section>
         </div>
 
-        <section className="card p-4 known-issues">
-          <p className="font-semibold">Known issues</p>
-          <p className="text-sm mt-1">{listing.knownIssues?.trim() ? listing.knownIssues : "None listed."}</p>
+        <section className="card p-4">
+          <p className="font-semibold">Work</p>
+          {user.role === "SELLER" || user.role === "ADMIN" ? (
+            <form action={updateListingOccupancyAction} className="mt-2 space-y-2">
+              <input type="hidden" name="listingId" value={listing.id} />
+              <p className="text-xs text-muted">Same 8 as buyer I&apos;ll take. One pick.</p>
+              <CheckRows
+                name="workLevel"
+                type="radio"
+                checked={[listing.workLevel]}
+                options={WORK_LEVELS.map((value) => ({ value, label: WORK_LEVEL_LABEL[value] }))}
+              />
+              <button className="listing-save" type="submit">
+                Save
+              </button>
+            </form>
+          ) : (
+            <p className="text-sm mt-1">{workLabel}</p>
+          )}
         </section>
 
-        {user.role === "BUYER" && needsWork.length ? (
-          <section className="card p-4 needs-work">
-            <p className="font-semibold">Needs work</p>
-            <div className="needs-chips">
-              {needsWork.map((item) => (
-                <span key={item} className="chip occupancy-chip">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {user.role === "SELLER" || user.role === "ADMIN" ? (
-          <section className="card p-4 needs-work">
-            <form action={updateListingOccupancyAction} className="space-y-2">
+        <section className="card p-4 needs-work">
+          <p className="font-semibold">Needs work</p>
+          {user.role === "SELLER" || user.role === "ADMIN" ? (
+            <form action={updateListingOccupancyAction} className="mt-2 space-y-2">
               <input type="hidden" name="listingId" value={listing.id} />
               <input type="hidden" name="needsWorkSent" value="1" />
-              <p className="font-semibold">Needs work</p>
+              <p className="text-xs text-muted">
+                Same 12 the buyer sees as chips. Not I&apos;ll take, and not a buy-box filter.
+              </p>
               <CheckRows
                 name="needsWork"
                 checked={needsWork}
@@ -223,8 +208,23 @@ export default async function ListingPage({
                 Save
               </button>
             </form>
-          </section>
-        ) : null}
+          ) : needsWork.length ? (
+            <div className="needs-chips">
+              {needsWork.map((item) => (
+                <span key={item} className="chip occupancy-chip">
+                  {item}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm mt-1">None listed.</p>
+          )}
+        </section>
+
+        <section className="card p-4 known-issues">
+          <p className="font-semibold">Known issues</p>
+          <p className="text-sm mt-1">{listing.knownIssues?.trim() ? listing.knownIssues : "None listed."}</p>
+        </section>
 
         <section className="card p-4">
           <p className="font-semibold mb-2">Offer + rehab vs AVM leftover</p>
