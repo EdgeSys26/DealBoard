@@ -85,9 +85,6 @@ export function WhereSection({
     <section className="card buybox-section">
       <div className="buybox-section-head">
         <p className="font-semibold">1. Where</p>
-        <button className="btn-secondary buybox-save" type="submit">
-          Save
-        </button>
       </div>
       <label className="field">
         Pin or zip

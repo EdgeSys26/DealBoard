@@ -93,6 +93,12 @@ export function digitsZip(value: string | null | undefined) {
   return String(value || "").replace(/\D/g, "").slice(0, 5);
 }
 
+export function persistBuyBoxZip(typed: string | null | undefined, existingZip?: string | null) {
+  const digits = digitsZip(typed);
+  if (digits.length === 5) return digits;
+  return digitsZip(existingZip) || NOBLESVILLE_SQUARE.zip;
+}
+
 export function listZipPins() {
   return [...PIN_SEEDS].sort((a, b) => a.zip.localeCompare(b.zip) || a.label.localeCompare(b.label));
 }
