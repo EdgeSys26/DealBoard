@@ -270,7 +270,7 @@ export async function getAdminData() {
     orderBy: { createdAt: "desc" },
   });
   const listings = await prisma.listing.findMany({
-    include: { seller: true, offers: true },
+    include: { seller: true, offers: { include: { buyer: true } } },
     orderBy: { createdAt: "desc" },
   });
   const adjustments = await prisma.billingAdjustment.findMany({
