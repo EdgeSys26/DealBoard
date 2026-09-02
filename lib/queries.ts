@@ -200,6 +200,7 @@ export async function getSellerDashboard(userId: string) {
       offers: { include: { buyer: true }, orderBy: { createdAt: "desc" } },
       titleSlots: true,
       titleFile: { select: { id: true } },
+      favorites: { where: { kind: "FAVORITE" }, select: { id: true } },
     },
     orderBy: { createdAt: "desc" },
   });
