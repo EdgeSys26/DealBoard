@@ -27,12 +27,14 @@ function closeDay(date: Date) {
 export default async function SellerHome({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; sort?: string }>;
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/");
   if (user.role === "BUYER") redirect("/home");
-  const tab = sellerTab((await searchParams).tab);
+  const params = await searchParams;
+  const tab = sellerTab(params.tab);
+  const citySort = params.sort === "city-desc" ? "city-desc" : params.sort === "city" ? "city" : null;
   const sellerId = user.role === "ADMIN" ? "user_seller" : user.id;
   if (tab === "offers") await markSellerOffersSeenAction();
   const { listings, meter, blasts, platformDeposit, levers, stats, sellerBadge, strikeCount } =
@@ -40,6 +42,12 @@ export default async function SellerHome({
   const hotNow = new Date();
   const liveHotId = listings.find((listing) => isListingHot(listing, hotNow))?.id ?? null;
   const cooldownUntil = hotCooldownUntil(lastHotEndedAt(listings));
+  const tableListings = citySort
+    ? [...listings].sort((a, b) => {
+        const cmp = a.city.localeCompare(b.city) || a.address.localeCompare(b.address);
+        return citySort === "city-desc" ? -cmp : cmp;
+      })
+    : listings;
   const incoming = listings.flatMap((listing) =>
     listing.offers.map((offer) => ({ listing, offer })),
   );
@@ -122,18 +130,28 @@ export default async function SellerHome({
                     <tr>
                       <th></th>
                       <th>Address</th>
+                      <th>
+                        <Link
+                          href={
+                            citySort === "city"
+                              ? "/seller?tab=listings&sort=city-desc"
+                              : "/seller?tab=listings&sort=city"
+                          }
+                        >
+                          City{citySort === "city" ? " ↑" : citySort === "city-desc" ? " ↓" : ""}
+                        </Link>
+                      </th>
                       <th title="Pay homeowner">Contract</th>
                       <th>Asking</th>
                       <th>Status</th>
                       <th>Floor</th>
                       <th>Deposit</th>
-                      <th>Activity</th>
-                      <th></th>
+                      <th>Views / Saves</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {listings.map((listing) => {
+                    {tableListings.map((listing) => {
                       const hot = isListingHot(listing, hotNow);
                       const canHot = evaluateHot({
                         badge: sellerBadge,
