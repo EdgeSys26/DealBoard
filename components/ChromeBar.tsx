@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 import { demoLoginAction, logoutAction } from "@/lib/actions";
 import type { Role } from "@/lib/types";
 import { DashTabs } from "@/components/DashTabs";
@@ -34,7 +35,7 @@ export function ChromeBar({
   sellerBadges = { newOfferCount: 0, expiring: false },
 }: {
   current: Role;
-  sellerBadges?: { newOfferCount: number; expiring: boolean };
+  sellerBadges?: { newOfferCount: number; expiring: false | boolean } | { newOfferCount: number; expiring: boolean };
 }) {
   const path = usePathname();
   const params = useSearchParams();
@@ -80,8 +81,15 @@ export function ChromeBar({
       </Link>
       {tabs ? <DashTabs items={tabs} active={active} /> : <div className="dash-tabs" />}
       <div className="role-bar-pills">
-        <button type="button" className="role-pill" onClick={toggleTheme}>
-          {dark ? "Light" : "Dark"}
+        <button
+          type="button"
+          className="role-pill theme-toggle"
+          onClick={toggleTheme}
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          title={dark ? "Light mode" : "Dark mode"}
+          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, padding: 0 }}
+        >
+          {dark ? <Sun size={16} aria-hidden /> : <Moon size={16} aria-hidden />}
         </button>
         {ROLES.map(({ role, label }) => (
           <form key={role} action={demoLoginAction}>
