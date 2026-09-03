@@ -1,10 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { readStoredTheme, writeTheme } from "@/components/ThemeInit";
 
-/** Compact sun/moon control for chrome. Cycles light ↔ dark. */
+function SunIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="m4.93 4.93 1.41 1.41" />
+      <path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="m6.34 17.66-1.41 1.41" />
+      <path d="m19.07 4.93-1.41 1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </svg>
+  );
+}
+
+/** Sun and moon chrome control. Cycles light ↔ dark. */
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -18,34 +41,53 @@ export function ThemeToggle() {
 
   const isDark = !mounted || dark;
 
-  function toggleTheme() {
-    const next = !readStoredTheme();
+  function setMode(next: boolean) {
     writeTheme(next);
     setDark(next);
   }
 
+  const btn = (on: boolean): CSSProperties => ({
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 32,
+    height: 32,
+    padding: 0,
+    border: "1px solid var(--line)",
+    borderRadius: 8,
+    background: on ? "var(--card)" : "transparent",
+    color: on ? "var(--ink)" : "var(--muted)",
+  });
+
   return (
-    <button
-      type="button"
+    <div
       className="theme-toggle"
-      onClick={toggleTheme}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      title={isDark ? "Light mode" : "Dark mode"}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 40,
-        height: 40,
-        padding: 0,
-        border: 0,
-        background: "transparent",
-        color: "var(--muted)",
-        borderRadius: 8,
-        flexShrink: 0,
-      }}
+      role="group"
+      aria-label="Color theme"
+      style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
     >
-      {isDark ? <Sun size={16} strokeWidth={2} aria-hidden /> : <Moon size={16} strokeWidth={2} aria-hidden />}
-    </button>
+      <button
+        type="button"
+        className="theme-toggle-btn"
+        aria-pressed={!isDark}
+        aria-label="Light mode"
+        title="Light mode"
+        style={btn(!isDark)}
+        onClick={() => setMode(false)}
+      >
+        <SunIcon />
+      </button>
+      <button
+        type="button"
+        className="theme-toggle-btn"
+        aria-pressed={isDark}
+        aria-label="Dark mode"
+        title="Dark mode"
+        style={btn(isDark)}
+        onClick={() => setMode(true)}
+      >
+        <MoonIcon />
+      </button>
+    </div>
   );
 }

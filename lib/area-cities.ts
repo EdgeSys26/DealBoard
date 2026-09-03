@@ -49,8 +49,19 @@ export function cityAllowed(city: string, excluded: string[]) {
   return !excluded.includes(city);
 }
 
-export function homeCityChips(cities: string[], excluded: string[]) {
-  return cities.filter((city) => cityAllowed(city, excluded));
+export const HOME_OFF_COOKIE = "dealboard-home-off";
+
+/** Cities still shown on Home. Buy Box exclusions drop off this row. Home-off chips stay. */
+export function homeCityChips(cities: string[], buyBoxExcluded: string[]) {
+  return cities.filter((city) => cityAllowed(city, buyBoxExcluded));
+}
+
+export function pruneHomeOffCities(
+  homeOff: string[],
+  chipCities: string[],
+  buyBoxExcluded: string[],
+) {
+  return homeOff.filter((city) => chipCities.includes(city) && cityAllowed(city, buyBoxExcluded));
 }
 
 export function mergeExcludedCities(

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 import { requireUser } from "./auth";
 import { refreshGradesForBox } from "./grade-listing";
@@ -23,7 +24,13 @@ export async function saveBuyBoxAction(formData: FormData) {
   const centerLabel = String(formData.get("centerLabel") || NOBLESVILLE_SQUARE.label);
 
   const existing = await prisma.buyBox.findFirst({ where: { userId: user.id } });
-  const { citiesIntersectingCircle, exclusionsFromBuyBoxForm, parseExcludedCities } = await import("./area-cities");
+  const {
+    citiesIntersectingCircle,
+    exclusionsFromBuyBoxForm,
+    parseExcludedCities,
+    pruneHomeOffCities,
+    HOME_OFF_COOKIE,
+  } = await import("./area-cities");
   const { resolveBuyBoxPin } = await import("./geo-pins");
   const zip = persistBuyBoxZip(typedZip, existing?.zip);
   const pin = resolveBuyBoxPin({
@@ -62,6 +69,17 @@ export async function saveBuyBoxAction(formData: FormData) {
   const box = existing
     ? await prisma.buyBox.update({ where: { id: existing.id }, data })
     : await prisma.buyBox.create({ data: { id: `buybox_${user.id}`, ...data } });
+  const jar = await cookies();
+  const homeOff = pruneHomeOffCities(
+    parseExcludedCities(jar.get(HOME_OFF_COOKIE)?.value),
+    chipCities,
+    parseExcludedCities(excludedCities),
+  );
+  jar.set(HOME_OFF_COOKIE, JSON.stringify(homeOff), {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
   await refreshGradesForBox(box.id);
   revalidatePath("/home");
   revalidatePath("/buy-box");
