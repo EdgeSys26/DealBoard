@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
 import { demoLoginAction, logoutAction } from "@/lib/actions";
 import type { Role } from "@/lib/types";
 import { DashTabs } from "@/components/DashTabs";
-import { readStoredTheme, writeTheme } from "@/components/ThemeInit";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const SELLER_TABS = [
   { id: "listings", href: "/seller?tab=listings", label: "Listings" },
@@ -40,19 +38,6 @@ export function ChromeBar({
   const path = usePathname();
   const params = useSearchParams();
   const tab = params.get("tab") ?? "";
-  const [dark, setDark] = useState(false);
-
-  useEffect(() => {
-    const stored = readStoredTheme();
-    writeTheme(stored);
-    setDark(stored);
-  }, []);
-
-  function toggleTheme() {
-    const next = !readStoredTheme();
-    writeTheme(next);
-    setDark(next);
-  }
   const admin = path === "/admin";
   const sellerTabs = SELLER_TABS.map((item) => {
     if (item.id === "offers" && sellerBadges.newOfferCount > 0 && tab !== "offers") {
@@ -81,16 +66,7 @@ export function ChromeBar({
       </Link>
       {tabs ? <DashTabs items={tabs} active={active} /> : <div className="dash-tabs" />}
       <div className="role-bar-pills">
-        <button
-          type="button"
-          className="role-pill theme-toggle"
-          onClick={toggleTheme}
-          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-          title={dark ? "Light mode" : "Dark mode"}
-          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, padding: 0 }}
-        >
-          {dark ? <Sun size={16} aria-hidden /> : <Moon size={16} aria-hidden />}
-        </button>
+        <ThemeToggle />
         {ROLES.map(({ role, label }) => (
           <form key={role} action={demoLoginAction}>
             <input type="hidden" name="role" value={role} />
