@@ -1,11 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { demoLoginAction, logoutAction } from "@/lib/actions";
 import type { Role } from "@/lib/types";
 import { DashTabs } from "@/components/DashTabs";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { readStoredTheme, writeTheme } from "@/components/ThemeInit";
 
 const SELLER_TABS = [
   { id: "listings", href: "/seller?tab=listings", label: "Listings" },
@@ -59,6 +60,16 @@ export function ChromeBar({
       ? tab
       : "listings";
 
+  const [night, setNight] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const stored = readStoredTheme();
+    writeTheme(stored);
+    setNight(stored);
+    setMounted(true);
+  }, []);
+  const nightOn = !mounted || night;
+
   return (
     <header className="dash-chrome">
       <Link href={current === "SELLER" ? "/seller" : current === "ADMIN" ? "/admin" : "/home"} className="dash-brand">
@@ -66,7 +77,42 @@ export function ChromeBar({
       </Link>
       {tabs ? <DashTabs items={tabs} active={active} /> : <div className="dash-tabs" />}
       <div className="role-bar-pills">
-        <ThemeToggle />
+        <button
+          type="button"
+          className="role-pill"
+          aria-label={nightOn ? "Switch to light theme" : "Switch to dark theme"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 36,
+            height: 36,
+            padding: 0,
+          }}
+          onClick={() => {
+            const next = !nightOn;
+            writeTheme(next);
+            setNight(next);
+          }}
+        >
+          {nightOn ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2" />
+              <path d="M12 20v2" />
+              <path d="m4.93 4.93 1.41 1.41" />
+              <path d="m17.66 17.66 1.41 1.41" />
+              <path d="M2 12h2" />
+              <path d="M20 12h2" />
+              <path d="m6.34 17.66-1.41 1.41" />
+              <path d="m19.07 4.93-1.41 1.41" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+          )}
+        </button>
         {ROLES.map(({ role, label }) => (
           <form key={role} action={demoLoginAction}>
             <input type="hidden" name="role" value={role} />

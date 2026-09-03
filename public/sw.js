@@ -1,4 +1,4 @@
-const CACHE = "dealboard-v4";
+const CACHE = "dealboard-v5";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
