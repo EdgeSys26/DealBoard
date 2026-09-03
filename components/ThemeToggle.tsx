@@ -5,7 +5,7 @@ import { readStoredTheme, writeTheme } from "@/components/ThemeInit";
 
 function SunIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <circle cx="12" cy="12" r="4" />
       <path d="M12 2v2" />
       <path d="M12 20v2" />
@@ -21,13 +21,13 @@ function SunIcon() {
 
 function MoonIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
     </svg>
   );
 }
 
-/** Sun and moon chrome control. Cycles light ↔ dark. */
+/** 40×40 ghost: moon in light, sun in dark. */
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -41,53 +41,37 @@ export function ThemeToggle() {
 
   const isDark = !mounted || dark;
 
-  function setMode(next: boolean) {
+  function toggle() {
+    const next = !isDark;
     writeTheme(next);
     setDark(next);
   }
 
-  const btn = (on: boolean): CSSProperties => ({
+  const style: CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     padding: 0,
-    border: "1px solid var(--line)",
-    borderRadius: 8,
-    background: on ? "var(--card)" : "transparent",
-    color: on ? "var(--ink)" : "var(--muted)",
-  });
+    border: "none",
+    borderRadius: 10,
+    background: "transparent",
+    color: "var(--ink)",
+    cursor: "pointer",
+  };
 
   return (
-    <div
+    <button
+      type="button"
       className="theme-toggle"
-      role="group"
-      aria-label="Color theme"
-      style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+      data-theme-toggle="icon"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Light" : "Dark"}
+      style={style}
+      onClick={toggle}
     >
-      <button
-        type="button"
-        className="theme-toggle-btn"
-        aria-pressed={!isDark}
-        aria-label="Light mode"
-        title="Light mode"
-        style={btn(!isDark)}
-        onClick={() => setMode(false)}
-      >
-        <SunIcon />
-      </button>
-      <button
-        type="button"
-        className="theme-toggle-btn"
-        aria-pressed={isDark}
-        aria-label="Dark mode"
-        title="Dark mode"
-        style={btn(isDark)}
-        onClick={() => setMode(true)}
-      >
-        <MoonIcon />
-      </button>
-    </div>
+      {isDark ? <SunIcon /> : <MoonIcon />}
+    </button>
   );
 }

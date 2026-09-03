@@ -1,4 +1,4 @@
-import { toggleCityFilterAction } from "@/lib/actions";
+import { toggleCityFilterAction } from "@/lib/city-filter";
 
 export function CityChipRow({
   cities,
