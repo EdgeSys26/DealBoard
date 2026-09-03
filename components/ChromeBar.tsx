@@ -35,7 +35,7 @@ export function ChromeBar({
   sellerBadges = { newOfferCount: 0, expiring: false },
 }: {
   current: Role;
-  sellerBadges?: { newOfferCount: number; expiring: false | boolean } | { newOfferCount: number; expiring: boolean };
+  sellerBadges?: { newOfferCount: number; expiring: boolean };
 }) {
   const path = usePathname();
   const params = useSearchParams();
