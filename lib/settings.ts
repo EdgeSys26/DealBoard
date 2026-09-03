@@ -127,7 +127,12 @@ export async function ensureBoardSettings() {
 
   const { resolveBuyBoxPin } = await import("./geo-pins");
   const { citiesIntersectingCircle, parseExcludedCities } = await import("./area-cities");
-  const boxes = await prisma.buyBox.findMany();
+  let boxes: Awaited<ReturnType<typeof prisma.buyBox.findMany>> = [];
+  try {
+    boxes = await prisma.buyBox.findMany();
+  } catch {
+    return;
+  }
   for (const box of boxes) {
     const pin = resolveBuyBoxPin({
       zip: box.zip,
