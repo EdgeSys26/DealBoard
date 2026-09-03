@@ -12,7 +12,10 @@ export function ensureDemoDb() {
       if (users === 0) {
         await seedDemo(prisma);
       }
-    })();
+    })().catch((error) => {
+      boot = null;
+      throw error;
+    });
   }
   return boot;
 }

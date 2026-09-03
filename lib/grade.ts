@@ -99,7 +99,7 @@ export function gradeListing(
   if (box.minSf != null && listing.sf < box.minSf) {
     gateFails.push("Below minimum square feet");
   }
-  if (!isNeedsCompatible(listing.needs, box.willingToFix)) {
+  if (!isNeedsCompatible(listing.needs ?? [], box.willingToFix ?? [])) {
     gateFails.push("Need not willing to fix");
   }
   if (box.maxRehab != null && listing.rehabEstimate > box.maxRehab) {

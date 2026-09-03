@@ -45,11 +45,13 @@ export function needsWorkJson(raw: unknown): string {
 
 /** Empty willing-to-fix = all. Empty listing Needs = do not fail. */
 export function isNeedsCompatible(
-  listingNeeds: readonly string[],
-  willingToFix: readonly string[],
+  listingNeeds?: readonly string[] | null,
+  willingToFix?: readonly string[] | null,
 ): boolean {
-  if (!willingToFix.length) return true;
-  if (!listingNeeds.length) return true;
-  const allowed = new Set(willingToFix);
-  return listingNeeds.every((need) => allowed.has(need));
+  const needs = listingNeeds ?? [];
+  const willing = willingToFix ?? [];
+  if (!willing.length) return true;
+  if (!needs.length) return true;
+  const allowed = new Set(willing);
+  return needs.every((need) => allowed.has(need));
 }
